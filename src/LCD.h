@@ -44,7 +44,7 @@ void LCD_flush();
 
 void LCD_print_JoyC_Debug();
 
-void LCD_Setup();
+void LCD_UI_Setup();
 void LCD_CORE_Message();
 void LCD_IMU_Message();
 void LCD_Felg_Message();
@@ -67,6 +67,10 @@ void LCD_Resume_from_Abort_Message();
 void LCD_IMU_Message();
 
 void LCD_Pairing_Message();
+
+void LCD_Warn_WiFi_Message();
+
+void LCD_WiFi_Initializing_Message();
 
 uint16_t invertColor(uint16_t color);
 

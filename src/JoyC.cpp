@@ -379,6 +379,48 @@ void JoyC_loop(){
             JoyC_Y_up_down = 0;
         }
 
+        if (JoyC_X_left_right == 0 && JoyC_Y_up_down == 0){
+            JoyC_needs_to_return_to_center = false;
+        }
+
+
+        if (Warn_User_WiFi_Will_Be_Init && 
+        (JoyC_up || JoyC_down || JoyC_left || JoyC_right) && 
+        !JoyC_needs_to_return_to_center){
+\
+            Serial.print("WAbort: ");
+            Serial.print(Warn_User_WiFi_Will_Be_Init_Selector_Abort);
+
+            Serial.print(" Jup:");
+            Serial.print(JoyC_up);
+
+            Serial.print(" Jdown:");
+            Serial.print(JoyC_down);
+
+            Serial.print(" Jleft:");
+            Serial.print(JoyC_left);
+
+            Serial.print(" Jright:");
+            Serial.print(JoyC_right);
+
+            Serial.print(" Jntrtc:");
+            Serial.print(JoyC_needs_to_return_to_center);
+
+            Serial.println();
+
+
+            Warn_User_WiFi_Will_Be_Init_Selector_Abort = !Warn_User_WiFi_Will_Be_Init_Selector_Abort;
+
+            JoyC_up = false;
+            JoyC_down = false;
+            JoyC_left = false;
+            JoyC_right = false;
+
+            JoyC_needs_to_return_to_center = true;
+            
+            Warn_User_WiFi_Will_Be_Init = 1;
+        } // if the Init WiFi Warning is active and the user moves the joystick, toggle the selector
+
     }
 
 

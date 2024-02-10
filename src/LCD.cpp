@@ -16,26 +16,64 @@ void LCD_flush(){
     canvas.fillSprite(BLACK);
 }
 
+boolean print_LCD_Loop = false;
+
+boolean print_updating_battery_voltage = false;
+
 void LCD_loop(){
-    if ((counter % 1000) == 0) {
+
+    if (print_LCD_Loop){
+        Serial.println("LCD_Print_Counter()");
+    }
+
+    LCD_Print_Counter();
+
+    if (print_LCD_Loop){
+        Serial.println("LCD_Print_Counter() DONE");
+    }
+
+    
+   
+
+
+
+    if ((counter % 100) == 0) {
+    //if (true) {
+        if (print_updating_battery_voltage){
             Serial.print("Updating Battery Voltage: ");
-            updateBatVolt();
+        }
+        
+        updateBatVolt();
+
+        if(print_updating_battery_voltage){
             Serial.print("LCD_loop() running on core ");
             Serial.println(xPortGetCoreID());
+        }
+
+        LCD_DispBatVolt();
     }
-    if (!(is_paired)) {
-        Serial.print("Showing Pairing Message");
-        LCD_Pairing_Message();
+    // if (!(is_paired)) {
+    //     //Serial.println("Showing Pairing Message");
+    //     LCD_Pairing_Message();
+    // }
+
+    if (Warn_User_WiFi_Will_Be_Init && !WiFi_Is_Initializing){
+        LCD_Warn_WiFi_Message();
     }
+    else if (WiFi_Is_Initializing) {
+        LCD_WiFi_Initializing_Message();
+    }
+
+
     //LCD_DispAngle();
 
     //Serial.println("LCD_Status_Message()");
     LCD_Status_Message();
 
-    //Serial.println("LCD_Print_Counter()");
-    LCD_Print_Counter();
 
-    LCD_print_JoyC_Debug();
+
+   
+   // LCD_print_JoyC_Debug();
 
     //Serial.println("pushSprite()");
     canvas.pushSprite(0, 0);
@@ -62,14 +100,19 @@ void LCD_Print_Counter(){
     
     canvas.setTextColor(COUNTER_M_TEXT_COLOR);
 
-    canvas.setCursor(COUNTER_M_X+100, COUNTER_M_Y+2);
-    canvas.print(counter);
+    // canvas.setCursor(COUNTER_M_X+100, COUNTER_M_Y+2);
+    // canvas.print(counter);
     
     
-    canvas.setCursor(COUNTER_M_X+40, COUNTER_M_Y+2);
-    canvas.print("us");
-    canvas.setCursor(COUNTER_M_X+55, COUNTER_M_Y+2);
-    canvas.print(RealTcode_execution_time);
+    // canvas.setCursor(COUNTER_M_X+40, COUNTER_M_Y+2);
+    // canvas.print("us");
+    // canvas.setCursor(COUNTER_M_X+55, COUNTER_M_Y+2);
+    // canvas.print(RealTcode_execution_time);
+
+    //print CPU load
+
+    canvas.setCursor(COUNTER_M_X+30, COUNTER_M_Y+2);
+    canvas.print("CPU0:"+String(int(BackgroundTask_CPU_load))+"%"+ " CPU1:"+String(int(RealTcode_CPU_load))+"%");
 
     
     const int JoyCircle_X = 12;
@@ -228,7 +271,7 @@ void LCD_calib2_Message(void){
     canvas.setTextColor(WHITE);
 }
 
-void LCD_Setup(){
+void LCD_UI_Setup(){
     M5.Axp.ScreenBreath(11);
     //canvas.setRotation(2); // landscape inverted
     M5.lcd.setRotation(0);
@@ -261,21 +304,66 @@ void LCD_Setup(){
 
 void LCD_DispBatVolt() {
 
-    const int LCD_BTv_X = 5;
-    const int LCD_BTv_Y = 40; //220
-    const int LCD_BTv_W = 50;
-    const int LCD_BTv_H = 20;
+    const int LCD_BTv_X = 0;
+    const int LCD_BTv_Y = 41; //220
+    const int LCD_BTv_W = 35;
+    const int LCD_BTv_H = 13;
     const int LCD_BTv_R = 5;
+    
+    int LCD_BTv_C = TFT_LIGHTGREY;
 
-    canvas.setTextFont(2);
+    if(isCharging && perCentBatt > 80){
+        LCD_BTv_C = PURPLE;
+    }
+    else if(isCharging){
+        LCD_BTv_C = BLUE;
+    }
+    else if (perCentBatt == -1){
+        LCD_BTv_C = TFT_LIGHTGREY;
+    }
+    else if (perCentBatt < 20){
+        LCD_BTv_C = RED;
+    }
+    else if(perCentBatt < 40){
+        LCD_BTv_C = YELLOW;
+    }
+    else if(perCentBatt > 70){
+        LCD_BTv_C = GREEN;
+    }
+
+    canvas.setTextFont(1);
     canvas.setTextSize(1);
 
-    canvas.setCursor(LCD_BTv_X, LCD_BTv_Y);
+    canvas.setCursor(LCD_BTv_X+3, LCD_BTv_Y+3);
 
-    canvas.fillRoundRect(LCD_BTv_X-5, LCD_BTv_Y-2,
-     LCD_BTv_W, LCD_BTv_H, LCD_BTv_R, BLUE);
+    canvas.fillRoundRect(LCD_BTv_X, LCD_BTv_Y,
+     LCD_BTv_W, LCD_BTv_H, LCD_BTv_R, LCD_BTv_C);
+    canvas.fillRoundRect(LCD_BTv_X+LCD_BTv_W, LCD_BTv_Y+2,
+     4, 8, 2, LCD_BTv_C);
 
-    canvas.printf("%4.2fv ", vBatt);
+    String text = "";
+
+    if (perCentBatt <= -1){
+        text = " ... ";
+    }
+    else if (perCentBatt == 100){
+        text = String(perCentBatt) + "%";
+    }
+        
+    else{
+        text = " " + String(perCentBatt) + "%";
+    }
+
+
+        
+    
+
+    //canvas.printf("%4.2fv ", vBatt);
+    canvas.setTextColor(BLACK);
+    canvas.print(text);
+    //canvas.printf("%1.2fv ", vBatt);
+    //canvas.printf("%1.0fv ", perCentBatt);
+
 }
 
 void LCD_DispAngle() {
@@ -351,6 +439,93 @@ void LCD_Resume_from_Abort_Message(){
     LCD_IMU_Message();
 }
 
+
+
+void LCD_WiFi_Initializing_Message(){
+    canvas.setTextFont(2);
+    canvas.setTextSize(1);
+    canvas.setTextColor(BLACK);
+
+    const int WARN_WiFi_INIT_M_X = 5;
+    const int WARN_WiFi_INIT_M_Y = 150;
+    const int WARN_WiFi_INIT_M_W = 125;
+    const int WARN_WiFi_INIT_M_H = 55;
+    const int WARN_WiFi_INIT_M_R = 5;
+
+    const int WARN_WiFi_INIT_M_S_H = 20;
+    const int WARN_WiFi_INIT_M_S_W = 60;
+
+    const int WARN_WiFi_INIT_M_S = WARN_WiFi_INIT_M_X+5 + (Warn_User_WiFi_Will_Be_Init_Selector_Abort * (WARN_WiFi_INIT_M_S_W-5));
+
+
+    canvas.fillRoundRect(WARN_WiFi_INIT_M_X, WARN_WiFi_INIT_M_Y,
+        WARN_WiFi_INIT_M_W, WARN_WiFi_INIT_M_H, WARN_WiFi_INIT_M_R, WHITE);
+
+    canvas.setCursor(WARN_WiFi_INIT_M_X+5, WARN_WiFi_INIT_M_Y);
+    canvas.print("Initializing");
+
+    canvas.setCursor(WARN_WiFi_INIT_M_X+5, WARN_WiFi_INIT_M_Y + 15);
+    canvas.print("WiFi");
+    //canvas.print(" " + String(10-(Warn_User_WiFi_Will_Be_Init/10)) + "s");
+    
+
+
+    // canvas.fillRoundRect(WARN_WiFi_INIT_M_S, WARN_WiFi_INIT_M_Y+30,
+    //     WARN_WiFi_INIT_M_S_W, WARN_WiFi_INIT_M_S_H, WARN_WiFi_INIT_M_R, TFT_LIGHTGREY);
+
+
+    // canvas.setCursor(WARN_WiFi_INIT_M_X+10, WARN_WiFi_INIT_M_Y+32);
+    // canvas.print("Start      Abort");
+
+
+
+    // canvas.setTextColor(WHITE);
+
+    //canvas.fillTriangle
+}
+
+
+void LCD_Warn_WiFi_Message(){
+    canvas.setTextFont(2);
+    canvas.setTextSize(1);
+    canvas.setTextColor(BLACK);
+
+    const int WARN_WiFi_INIT_M_X = 5;
+    const int WARN_WiFi_INIT_M_Y = 150;
+    const int WARN_WiFi_INIT_M_W = 125;
+    const int WARN_WiFi_INIT_M_H = 55;
+    const int WARN_WiFi_INIT_M_R = 5;
+
+    const int WARN_WiFi_INIT_M_S_H = 20;
+    const int WARN_WiFi_INIT_M_S_W = 60;
+
+    const int WARN_WiFi_INIT_M_S = WARN_WiFi_INIT_M_X+5 + (Warn_User_WiFi_Will_Be_Init_Selector_Abort * (WARN_WiFi_INIT_M_S_W-5));
+
+
+    canvas.fillRoundRect(WARN_WiFi_INIT_M_X, WARN_WiFi_INIT_M_Y,
+        WARN_WiFi_INIT_M_W, WARN_WiFi_INIT_M_H, WARN_WiFi_INIT_M_R, WHITE);
+
+    canvas.setCursor(WARN_WiFi_INIT_M_X+5, WARN_WiFi_INIT_M_Y);
+    canvas.print("Scanning WiFi");
+
+    canvas.setCursor(WARN_WiFi_INIT_M_X+5, WARN_WiFi_INIT_M_Y + 15);
+    canvas.print("Networks in " + String(10-(Warn_User_WiFi_Will_Be_Init/10)) + "s");
+    
+
+
+    canvas.fillRoundRect(WARN_WiFi_INIT_M_S, WARN_WiFi_INIT_M_Y+30,
+        WARN_WiFi_INIT_M_S_W, WARN_WiFi_INIT_M_S_H, WARN_WiFi_INIT_M_R, TFT_LIGHTGREY);
+
+
+    canvas.setCursor(WARN_WiFi_INIT_M_X+10, WARN_WiFi_INIT_M_Y+32);
+    canvas.print("Start      Abort");
+
+
+
+    //canvas.setTextColor(WHITE);
+
+    //canvas.fillTriangle
+}
 
 void LCD_Pairing_Message(){
     canvas.setTextFont(2);

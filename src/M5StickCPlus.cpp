@@ -3,6 +3,7 @@
 // license information.
 
 #include "M5StickCPlus.h"
+#include "startup_ASCII_artwork.h"
 
 M5StickCPlus::M5StickCPlus() : isInited(0) {
 }
@@ -19,25 +20,26 @@ void M5StickCPlus::begin(bool LCDEnable, bool PowerEnable, bool SerialEnable) {
         Serial.begin(115200);
         Serial.flush();
         delay(50);
-        Serial.print("M5StickCPlus initializing...");
+        Serial.println(startup_ASCII_artwork);
     }
 
     // Power
+
     if (PowerEnable) {
+        Serial.println("Axp.begin()");
         Axp.begin();
     }
 
     // LCD INIT
     if (LCDEnable) {
+        Serial.println("Lcd.begin()");
         Lcd.begin();
     }
 
-    if (SerialEnable) {
-        Serial.println("OK");
-    }
+    // Serial.println("Beep.begin()");
+    // Beep.begin();
 
-    Beep.begin();
-
+    Serial.println("Rtc.begin()");
     Rtc.begin();
 }
 

@@ -16,3 +16,16 @@ completes.
 demo(circle)
 
 #### Based on [https://github.com/m5stack/M5-ProductExampleCodes/blob/master/App/BalaC/Arduino/Balac/Balac.ino](https://github.com/m5stack/M5-ProductExampleCodes/blob/master/App/BalaC/Arduino/Balac/Balac.ino)
+
+
+
+Setup:
+
+Install PlatformIO on Visual Studio Code.
+
+```bash
+
+
+Git clone the repository and open the project in PlatformIO.
+
+```bash

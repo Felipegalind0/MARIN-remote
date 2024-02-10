@@ -10,6 +10,8 @@
 #define SPEAKER_CH   1
 #define N_CAL1   100
 #define N_CAL2   100
+#define wire_sda 0
+#define wire_scl 26
 
 void drvMotor(byte ch, int8_t sp);
 void drvMotorR(int16_t pwm);

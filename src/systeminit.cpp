@@ -7,39 +7,40 @@
 #include "COMS.h"
 #include "JoyC.h"
 #include "variables.h"
+#include "pinout.h"
 
 void SysInit_Setup(void){
 
     //disableCore0WDT();
     
     M5.begin();
-    Wire.begin(0, 26);  // SDA,SCL
-    LCD_Setup();
 
-    serial_Init();
-
-    pinMode(LED, OUTPUT);
-    pinMode(SPEAKER, OUTPUT);
-
-    //ledcSetup(LED_CH, 5000, 8);
-    ledcSetup(SPEAKER_CH, 5000, 8);
-    //ledcAttachPin(LED, LED_CH);
-    ledcAttachPin(SPEAKER, SPEAKER_CH);
-    
-    digitalWrite(LED, HIGH);
     Serial.println("");
-    Serial.println("Starting Up Systems");
-    // Serial.print("Setup() running on core ");
-    // Serial.println(xPortGetCoreID());
-    digitalWrite(LED, LOW);
-    
-    //LCD_Setup();
 
-    StartUp_Sound();
+    Serial.println("Wire.begin(wire_sda, wire_scl);");
+    Wire.begin(wire_sda, wire_scl);
 
-    digitalWrite(LED, HIGH);
-    Wireless_Setup();
-    digitalWrite(LED, LOW);
+
+    Serial.println("LCD_UI_Setup()");
+    LCD_UI_Setup();
+
+    Serial.println("Setup_Speaker()");
+    Setup_Speaker();
+
+    Setup_Pinout();
+
+
+    Serial.println("Playing StartUp Sound");
+    xTaskCreatePinnedToCore(
+        StartUp_Sound,   /* Function to implement the task */
+        "StartUp_Sound", /* Name of the task */
+        10000,      /* Stack size in words */
+        NULL,       /* Task input parameter */
+        -2,          /* Priority of the task */
+        NULL,       /* Task handle. */
+        BackgroundCore);  /* Core where the task should run */
+
+
 
     JoyC_setup();
 
@@ -58,7 +59,8 @@ void SysInit_Setup(void){
     Serial.print("@RealTcode: Boot process complete in core #");
     Serial.println(xPortGetCoreID());
 
-    
+    Serial.println("is_booted = true");
+    is_booted = true;
 
     Serial.println("@SysInit_Setup COMPLETE");
 }

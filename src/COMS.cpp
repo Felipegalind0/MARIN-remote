@@ -1,26 +1,12 @@
 #include "variables.h"
 #include <WebSerial.h>
 #include <HardwareSerial.h>
-#include "startup_ASCII_artwork.h"
+
 
 //HardwareSerial Serial2(2); // Use hardware serial 2 for the second connection
 
 
 
-
-
-void serial_Init() {
-
-  // Initialize the physical serial interface for debugging
-  Serial.begin(115200);
-  Serial.println(startup_ASCII_artwork);
-
-
-  // Serial2.begin(115200, SERIAL_8N1, 32, 33);
-  // Serial2.setRxBufferSize(1024);
-  // Serial2.setDebugOutput(true);
-  // Serial2.println("Serial2 Initialized");
-}
 
 // void logData() {
 //   yield();

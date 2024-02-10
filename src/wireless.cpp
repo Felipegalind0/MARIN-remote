@@ -7,6 +7,8 @@
 
 #include <esp_now.h>
 
+#include <ESPmDNS.h>
+
 #if defined(ESP8266)
   #include <ESP8266WiFi.h>
   #include <ESPAsyncTCP.h>
@@ -14,6 +16,7 @@
   #include <WiFi.h>
   #include <AsyncTCP.h>
 #endif
+
 #include <ESPAsyncWebServer.h>
 #include <WebSerial.h>
 #include <Vector.h>
@@ -115,6 +118,9 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   
 }
 
+
+
+
 void Wireless_Setup(){
 
     WiFi.mode(WIFI_AP_STA); 
@@ -137,20 +143,31 @@ void Wireless_Setup(){
 
     
     Serial.print("Starting WiFI AP: ");
-    Serial.println(AP_ssid);
+    Serial.println(Remote_Name);
 
     Serial.print(" psswd: ");
     Serial.println(AP_password);
 
     //WiFi.softAP(AP_ssid);
-    WiFi.softAP(AP_ssid, AP_password);
+    WiFi.softAP(Remote_Name, AP_password);
 
 
-    Serial.println("Starting WebSerial...");
+    if (!MDNS.begin(Remote_Name)) { // Start the mDNS responder for 
+      Serial.println("Error setting up MDNS responder!");
+    } else {
+      Serial.println("mDNS responder started, device accessable at: " + String(Remote_Name) + ".local");
+      // You can now reach your device using "marin.local" in the browser
+    }
+
+
+    Serial.println("Starting WebSerial...");  
     WebSerial.begin(&server);
     /* Attach Message Callback */
     WebSerial.msgCallback(recvMsg);
+
     server.begin();
+
+    Serial.print("WebSerial accessable at: http://"+ String(Remote_Name) + ".local/webserial\n");
 
 
     Serial.print("Initializing ESP-NOW");
@@ -165,22 +182,55 @@ void Wireless_Setup(){
     Serial.print("Registering Data Receive Callback");
     esp_now_register_recv_cb(OnDataRecv);
 
+    
+
+
 }
+
 // returns dict(map) of SSIDs with ssid, MAC, and RSSI
-Vector<Network> get_ssids(){
-  int n = WiFi.scanNetworks();
+void get_ssids(){
+  
+  n_WiFi_Networks = WiFi.scanNetworks(); // Get the number of networks found
 
-  Vector<Network> networks;
+  Serial.println("\n-------------------------------------------------");
 
-  for (int i = 0; i < n; ++i) {
-    Network network;
-    network.ssid = WiFi.SSID(i);
-    network.mac = WiFi.BSSIDstr(i);
-    network.rssi = WiFi.RSSI(i);
-    networks.push_back(network); // Add the network to the vector
-    //Serial.println(network.ssid + " " + network.mac + " " + String(network.rssi));
+  Serial.println("Found " + String(n_WiFi_Networks) + " networks\n");
+
+
+  for (int i = 0; i < n_WiFi_Networks; i++) { // Loop through each network
+
+    robot_wifi_in_range = false;
+
+    // Network network;
+    // network.ssid = WiFi.SSID(i);
+    // network.mac = WiFi.BSSIDstr(i);
+    // network.rssi = WiFi.RSSI(i);
+    // WiFi_Networks.push_back(network);
+    // Serial.println(network.ssid + " " + network.mac + " " + String(network.rssi));
+
+    if (WiFi.SSID(i) == ssid) {
+      Serial.print("\n(Main WiFi)  ");
+      //Serial.println(WiFi.SSID(i) + " " + WiFi.BSSIDstr(i) + " " + String(WiFi.RSSI(i)) + "\n");
+      Serial.println(String(WiFi.RSSI(i)) + " " + WiFi.BSSIDstr(i) + " " + WiFi.SSID(i) + "\n");
+
+    }
+    else if (WiFi.SSID(i) == Robot_ssid) {
+      if (Robot_MAC == "-") {
+        Robot_MAC = WiFi.BSSIDstr(i);
+        robot_wifi_in_range = true;
+      }
+      Serial.print("\n(Robot WiFi) ");
+      //Serial.println(WiFi.SSID(i) + " " + WiFi.BSSIDstr(i) + " " + String(WiFi.RSSI(i))+ "\n");
+      Serial.println(String(WiFi.RSSI(i)) + " " + WiFi.BSSIDstr(i) + " " + WiFi.SSID(i) + "\n");
+    }
+    else {
+      Serial.print(  "(Unknown)    ");
+      //Serial.println(WiFi.SSID(i) + " " + WiFi.BSSIDstr(i) + " " + String(WiFi.RSSI(i)));
+      Serial.println(String(WiFi.RSSI(i)) + " " + WiFi.BSSIDstr(i) + " " + WiFi.SSID(i));
+    }
+
   }
 
-  // return networks;
-  return networks;
+  Serial.println("-------------------------------------------------\n");
+
 }
