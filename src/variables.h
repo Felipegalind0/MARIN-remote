@@ -114,6 +114,10 @@ extern byte JoyC_X_Cycles_In_Deadzone, JoyC_Y_Cycles_In_Deadzone;
 
 extern byte JoyC_X, JoyC_Y;
 
+extern float JoyC_r, JoyC_Phi;
+
+extern boolean JoyC_btn;
+
 extern byte demoMode;
 extern byte Abtn;
 extern byte Bbtn;

@@ -115,16 +115,25 @@ void LCD_Print_Counter(){
     canvas.print("CPU0:"+String(int(BackgroundTask_CPU_load))+"%"+ " CPU1:"+String(int(RealTcode_CPU_load))+"%");
 
     
-    const int JoyCircle_X = 12;
-    const int JoyCircle_Y = 12;
+    const int JoyCircle_X = 14;
+    const int JoyCircle_Y = 14;
     const int JoyCircle_R = 10;
     const int JoyCircle_IR = 3;
     const int JoyCircle_OC = BLACK;
 
-    int JoyCircle_IC = BLACK;
+    int JoyCircle_IC = TFT_LIGHTGREY;
 
-    if (JoyC_In_X_DeadZone && JoyC_In_y_DeadZone){
+    if (JoyC_btn){
         JoyCircle_IC = RED;
+    }
+    else if (JoyC_In_X_DeadZone && JoyC_In_y_DeadZone){
+        JoyCircle_IC = TFT_LIGHTGREY;
+    }
+    else if (JoyC_r > 40){
+        JoyCircle_IC = BLACK;
+    }
+    else{
+        JoyCircle_IC = TFT_DARKGREY;
     }
     
     float inner_JoyCircle_X = JoyCircle_X + (JoyC_X / 10) -5;
@@ -135,45 +144,67 @@ void LCD_Print_Counter(){
 
     canvas.setCursor(JoyCircle_X-8, JoyCircle_Y+18);
     if (JoyC_In_X_DeadZone){
-        canvas.setTextColor(RED);
+        canvas.setTextColor(TFT_LIGHTGREY);
     }
-    else{
+    else if (5 >= JoyC_X || JoyC_X >= 95){
         canvas.setTextColor(BLACK);
     }
-    canvas.print(JoyC_X);
+    else{
+        canvas.setTextColor(TFT_DARKGREY);
+    }
+    if (JoyC_X < 10){
+        canvas.print("0"+String(JoyC_X));
+    }
+    else{
+        canvas.print(JoyC_X);
+    }
+
 
     canvas.setCursor(JoyCircle_X+6, JoyCircle_Y+18);
     if (JoyC_In_y_DeadZone){
-        canvas.setTextColor(RED);
+        canvas.setTextColor(TFT_LIGHTGREY);
     }
-    else{
+    else if (5 >= JoyC_Y || JoyC_Y >= 95){
         canvas.setTextColor(BLACK);
     }
-    canvas.print(JoyC_Y);
+    else{
+        canvas.setTextColor(TFT_DARKGREY);
+    }
 
+    if (JoyC_Y < 10){
+        canvas.print("0"+String(JoyC_Y));
+    }
+    else{
+        canvas.print(JoyC_Y);
+    }
+    
+
+    
+    byte Xinput_rect_x = 22;
+    byte Xinput_rect_y = 4;
 
     if(JoyC_X_left_right == -1){ // left
 
-        canvas.fillRect(JoyCircle_X-12, JoyCircle_Y-10, 4, 20, BLACK);
+        canvas.fillRect(JoyCircle_X-14, JoyCircle_Y-11, Xinput_rect_y, Xinput_rect_x, BLACK);
         //canvas.drawRect(JoyCircle_X-12, JoyCircle_Y-10, JoyCircle_X-6, JoyCircle_Y+10, BLACK);
         //canvas.drawLine(JoyCircle_X-10, JoyCircle_Y-10, JoyCircle_X-10, JoyCircle_Y+10, BLACK);
     }
 
     else if(JoyC_X_left_right == 1){ // right
-        canvas.fillRect(JoyCircle_X+9, JoyCircle_Y-10, 4, 20, BLACK);
+        canvas.fillRect(JoyCircle_X+11, JoyCircle_Y-10, Xinput_rect_y, Xinput_rect_x, BLACK);
         //canvas.drawRect(JoyCircle_X+6, JoyCircle_Y-10, JoyCircle_X+12, JoyCircle_Y+10, BLACK);
         //canvas.drawLine(JoyCircle_X+10, JoyCircle_Y-10, JoyCircle_X+10, JoyCircle_Y+10, BLACK);
     }
 
 
     if(JoyC_Y_up_down == -1){   // down
-        canvas.fillRect(JoyCircle_X-10, JoyCircle_Y+10, 20, 4, BLACK);
+        canvas.fillRect(JoyCircle_X-10, JoyCircle_Y+11, Xinput_rect_x, Xinput_rect_y, BLACK);
         //canvas.drawRect(JoyCircle_X-10, JoyCircle_Y-12, JoyCircle_X+10, JoyCircle_Y-6, BLACK);
         //canvas.drawLine(JoyCircle_X-10, JoyCircle_Y-10, JoyCircle_X+10, JoyCircle_Y-10, BLACK);
     }
 
     else if(JoyC_Y_up_down == 1){   // up
-        canvas.fillRect(JoyCircle_X-9, JoyCircle_Y-12, 20, 4, BLACK);
+        canvas.fillRect(JoyCircle_X-10, JoyCircle_Y-14, Xinput_rect_x, Xinput_rect_y, BLACK);
         //canvas.drawRect(JoyCircle_X-10, JoyCircle_Y+6, JoyCircle_X+10, JoyCircle_Y+12, BLACK);
         //canvas.drawLine(JoyCircle_X-10, JoyCircle_Y+10, JoyCircle_X+10, JoyCircle_Y+10, BLACK);
     }
@@ -313,7 +344,7 @@ void LCD_DispBatVolt() {
     int LCD_BTv_C = TFT_LIGHTGREY;
 
     if(isCharging && perCentBatt > 80){
-        LCD_BTv_C = PURPLE;
+        LCD_BTv_C = MAGENTA;
     }
     else if(isCharging){
         LCD_BTv_C = BLUE;

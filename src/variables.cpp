@@ -88,6 +88,12 @@ byte JoyC_X_deadzone = 200, JoyC_Y_deadzone = 200;
 
 byte JoyC_X = 50, JoyC_Y = 50;
 
+boolean JoyC_btn = false;
+
+float JoyC_r = 0;
+
+float JoyC_Phi = 0;
+
 byte JoyC_X_Cycles_In_Deadzone = 0, JoyC_Y_Cycles_In_Deadzone = 0;
 
 byte demoMode = 0;

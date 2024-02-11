@@ -5,6 +5,26 @@
 #include "JoyC.h"
 #include "variables.h"
 
+#include <cmath> // Include the cmath library for sqrt and atan2 functions
+
+void cartesianToPolar() {
+    // Normalize x and y to have 0,0 at the center
+    float x_normalized = JoyC_X - 50.0;
+    float y_normalized = JoyC_Y - 50.0;
+
+    // Calculate the radius
+    JoyC_r = sqrt(x_normalized * x_normalized + y_normalized * y_normalized);
+
+    // Calculate the angle in radians
+    JoyC_Phi = atan2(y_normalized, x_normalized);
+
+    // for angle in degrees, uncomment the following line
+    JoyC_Phi = JoyC_Phi * (180.0 / M_PI);
+
+    //Serial.println("r: " + String(JoyC_r) + " φ: " + String(JoyC_Phi));
+}
+
+
 void UNIT_JOYC::writeBytes(uint8_t addr, uint8_t reg, uint8_t *buffer,
                            uint8_t length) {
     _wire->beginTransmission(addr);
@@ -215,6 +235,10 @@ void JoyC_loop(){
 
     JoyC_Y_raw = joyc.getADCValue(1);
 
+    JoyC_btn = !joyc.getButtonStatus();
+
+    cartesianToPolar();
+
     //print_JoyC_raw_values();
 
     //print_JoyC_center_values();
@@ -388,8 +412,8 @@ void JoyC_loop(){
         (JoyC_up || JoyC_down || JoyC_left || JoyC_right) && 
         !JoyC_needs_to_return_to_center){
 \
-            Serial.print("WAbort: ");
-            Serial.print(Warn_User_WiFi_Will_Be_Init_Selector_Abort);
+            // Serial.print("WAbort: ");
+            // Serial.print(Warn_User_WiFi_Will_Be_Init_Selector_Abort);
 
             Serial.print(" Jup:");
             Serial.print(JoyC_up);
@@ -405,6 +429,7 @@ void JoyC_loop(){
 
             Serial.print(" Jntrtc:");
             Serial.print(JoyC_needs_to_return_to_center);
+            // lol yes, I know 'Serial-Figet'... I know have a problem hehe :D
 
             Serial.println();
 
