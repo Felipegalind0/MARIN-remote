@@ -429,7 +429,6 @@ void JoyC_loop(){
 
             Serial.print(" Jntrtc:");
             Serial.print(JoyC_needs_to_return_to_center);
-            // lol yes, I know 'Serial-Figet'... I know have a problem hehe :D
 
             Serial.println();
 

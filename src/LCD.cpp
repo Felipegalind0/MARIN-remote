@@ -136,13 +136,13 @@ void LCD_Print_Counter(){
         JoyCircle_IC = TFT_DARKGREY;
     }
     
-    float inner_JoyCircle_X = JoyCircle_X + (JoyC_X / 10) -5;
-    float inner_JoyCircle_Y = JoyCircle_Y - (JoyC_Y / 10) +5; // y is inverted
+    float inner_JoyCircle_X = JoyCircle_X + ((JoyC_X+1) / 10) -(JoyCircle_R/2);
+    float inner_JoyCircle_Y = JoyCircle_Y - ((JoyC_Y+1) / 10) +(JoyCircle_R/2); // y is inverted
 
     canvas.drawCircle(JoyCircle_X, JoyCircle_Y, JoyCircle_R, JoyCircle_OC);
     canvas.fillCircle(inner_JoyCircle_X, inner_JoyCircle_Y, JoyCircle_IR, JoyCircle_IC);
 
-    canvas.setCursor(JoyCircle_X-8, JoyCircle_Y+18);
+    canvas.setCursor(JoyCircle_X-10, JoyCircle_Y+16);
     if (JoyC_In_X_DeadZone){
         canvas.setTextColor(TFT_LIGHTGREY);
     }
@@ -160,7 +160,7 @@ void LCD_Print_Counter(){
     }
 
 
-    canvas.setCursor(JoyCircle_X+6, JoyCircle_Y+18);
+    canvas.setCursor(JoyCircle_X+4, JoyCircle_Y+16);
     if (JoyC_In_y_DeadZone){
         canvas.setTextColor(TFT_LIGHTGREY);
     }
@@ -343,8 +343,8 @@ void LCD_DispBatVolt() {
     
     int LCD_BTv_C = TFT_LIGHTGREY;
 
-    if(isCharging && perCentBatt > 80){
-        LCD_BTv_C = MAGENTA;
+    if(perCentBatt > 80){
+        LCD_BTv_C = GREEN;
     }
     else if(isCharging){
         LCD_BTv_C = BLUE;
@@ -357,9 +357,6 @@ void LCD_DispBatVolt() {
     }
     else if(perCentBatt < 40){
         LCD_BTv_C = YELLOW;
-    }
-    else if(perCentBatt > 70){
-        LCD_BTv_C = GREEN;
     }
 
     canvas.setTextFont(1);

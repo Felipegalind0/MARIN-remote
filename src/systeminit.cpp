@@ -67,8 +67,8 @@ void SysInit_Setup(void){
 
 
 void SysInit_Check(void){
-    digitalWrite(LED, HIGH);
+    //digitalWrite(LED, HIGH);
     Serial.println("");
     Serial.println("StartUp Complete!");
-    digitalWrite(LED, LOW);
+    //digitalWrite(LED, LOW);
 }

@@ -3,6 +3,7 @@
 #include <WebSerial.h>
 
 
+
 float vBatt, voltAve             = -1.0;
 
 float vBatt_min = 3.3, vBatt_max = 4.1;
@@ -26,6 +27,8 @@ boolean is_paired = false;
 boolean is_booted = false;
 
 boolean WiFi_connected = false;
+
+boolean WiFi_With_Remote_Name_Found = false;
 
 boolean robot_wifi_in_range = false;
 
@@ -100,6 +103,7 @@ byte demoMode = 0;
 
 byte Abtn = 0;
 byte Bbtn = 0;
+byte Pbtn = 0;
 
 boolean pairRequested = false;
 
@@ -187,12 +191,12 @@ void resetPara() {
 
 // -------Functions that should be run on second core-------
 
-// Update mode 
-void setMode(bool inc) {
-    if (inc) demoMode = ++demoMode % 2;
+// // Update mode 
+// void setMode(bool inc) {
+//     if (inc) demoMode = ++demoMode % 2;
 
-    LCD_Update_Mode();
-}
+//     LCD_Update_Mode();
+// }
 
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
 {

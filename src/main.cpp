@@ -161,6 +161,7 @@ void enter_sleep() {
 
   // Set CPU Frequency to 80MHz
   setCpuFrequencyMhz(80);
+  Serial.println("@enter_sleep: CPU Frequency set to " + String(getCpuFrequencyMhz()));
 
 }
 
@@ -220,6 +221,9 @@ void exec_RealTcode() {
     // Serial.print(" Warn_User_WiFi_Will_Be_Init_Threshold: ");
     // Serial.println(Warn_User_WiFi_Will_Be_Init_Threshold);
 
+    // print GPIO35
+    // Serial.print("GPIO35: ");
+    // Serial.println(digitalRead(35)); DOES NOT WORK
 
     if (!(is_booted)) { // If Device is not booted, run the setup code
       
@@ -274,6 +278,17 @@ void exec_RealTcode() {
 
     M5.update();
 
+    JoyC_loop();
+
+    LCD_loop();
+
+    if(M5.BtnA.pressedFor(1000)){
+      Serial.println("Button A was pressed for 1 second");
+
+    }
+    else {
+   
+    }
 
     if(M5.BtnA.wasPressed()){
       Serial.println("Button A was pressed");
@@ -291,9 +306,12 @@ void exec_RealTcode() {
       Bbtn = 0;
     }
 
-    JoyC_loop();
 
-    LCD_loop();
+
+    if ((counter % btnCounter) == 0) {
+      //Serial.print("Checking buttons");
+      CheckButtons();
+    }
 
     // Serial.print("X_dz: ");
     // Serial.print(JoyC_X_Cycles_In_Deadzone);
@@ -316,7 +334,7 @@ void exec_RealTcode() {
       }
       else{
 
-        if (sleep_exit_timer > 10){
+        if (sleep_exit_timer > 1){
           exit_sleep();
           sleep_exit_timer = 0;
         }
@@ -461,11 +479,6 @@ void exec_BackgroundTask() {
   if ((xSemaphoreTake(syncSemaphore, portMAX_DELAY) == pdTRUE) && (is_booted)) {
     //Serial.print("@BackgroundTask: ");
 
-    // // 
-    // if ((counter % btnCounter) == 0) {
-    //   Serial.print("Checking buttons");
-    //   CheckButtons();
-    // }
 
     // 
     // if (counter % logCounter == 0) {
@@ -482,12 +495,18 @@ void exec_BackgroundTask() {
       
       Warn_User_WiFi_Will_Be_Init = 0;  
       Serial.println("\nWireless_Setup()");
-      digitalWrite(LED, HIGH);
+
+      RED_LED(1);
+
+
+      //digitalWrite(LED, HIGH);
       Wireless_Setup();
 
       Serial.println("\nWireless_Setup() DONE \n");
+
+      RED_LED(0);
       
-      digitalWrite(LED, LOW);
+      //digitalWrite(LED, LOW);
 
       WiFi_Is_Initialized = true;
     }

@@ -214,11 +214,20 @@ void get_ssids(){
       Serial.println(String(WiFi.RSSI(i)) + " " + WiFi.BSSIDstr(i) + " " + WiFi.SSID(i) + "\n");
 
     }
-    else if (WiFi.SSID(i) == Robot_ssid) {
+    else if (WiFi.SSID(i) == Remote_Name) {
+      Serial.print("\n(Remote_Name)");
+      //Serial.println(WiFi.SSID(i) + " " + WiFi.BSSIDstr(i) + " " + String(WiFi.RSSI(i))+ "\n");
+      Serial.println(String(WiFi.RSSI(i)) + " " + WiFi.BSSIDstr(i) + " " + WiFi.SSID(i) + "\n");
+
+
+      WiFi_With_Remote_Name_Found = true;
+    }
+    // if WiFi.SSID contains starts with 'MARIN' and ends with '-robot'
+    else if (WiFi.SSID(i).startsWith("MARIN") && WiFi.SSID(i).endsWith("-robot")) {
       if (Robot_MAC == "-") {
         Robot_MAC = WiFi.BSSIDstr(i);
-        robot_wifi_in_range = true;
       }
+      robot_wifi_in_range = true;
       Serial.print("\n(Robot WiFi) ");
       //Serial.println(WiFi.SSID(i) + " " + WiFi.BSSIDstr(i) + " " + String(WiFi.RSSI(i))+ "\n");
       Serial.println(String(WiFi.RSSI(i)) + " " + WiFi.BSSIDstr(i) + " " + WiFi.SSID(i) + "\n");
@@ -232,5 +241,17 @@ void get_ssids(){
   }
 
   Serial.println("-------------------------------------------------\n");
+
+  if (WiFi_With_Remote_Name_Found) {
+    Serial.println("ERROR: WiFi With same name as remote name found, please change the remote name in creds.h\n");
+  }
+  else {
+   
+  }
+
+  if (robot_wifi_in_range) {
+    Serial.println("SUCCESS: Robot WiFi found :D Robot_ssid: " + Robot_ssid + " Robot_MAC: " + Robot_MAC + "\n");
+  }
+
 
 }

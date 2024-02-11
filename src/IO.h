@@ -13,8 +13,12 @@
 #define wire_sda 0
 #define wire_scl 26
 
+void RED_LED(bool state);
+
 void drvMotor(byte ch, int8_t sp);
 void drvMotorR(int16_t pwm);
 void drvMotorL(int16_t pwm);
 void CheckButtons();
+
+
 #endif

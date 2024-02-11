@@ -56,7 +56,7 @@ void readGyro() {
 // First Calibration
 void calib1() {
     calDelay(30);
-    digitalWrite(LED, HIGH);
+    //digitalWrite(LED, HIGH);
     calDelay(80);
     LCD_calib1_Message();
     gyroYoffset = 0.0;
@@ -67,7 +67,7 @@ void calib1() {
     }
     gyroYoffset /= (float)N_CAL1;
     M5.Lcd.fillScreen(BLACK);
-    digitalWrite(LED, LOW);
+    //digitalWrite(LED, LOW);
 }
 
 

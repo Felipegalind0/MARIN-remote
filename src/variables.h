@@ -25,7 +25,6 @@ extern float deviceTemp;
 
 
 
-
 extern int x, y;
 
 extern Vector<Network> WiFi_Networks;
@@ -42,6 +41,8 @@ extern boolean standing, hasFallen, abortWasHandled, is_paired, is_booted, JoyC_
 
 
 extern boolean WiFi_Is_Initialized;
+
+extern boolean WiFi_With_Remote_Name_Found;
 
 
 extern boolean WiFi_Is_Initializing;
@@ -121,6 +122,7 @@ extern boolean JoyC_btn;
 extern byte demoMode;
 extern byte Abtn;
 extern byte Bbtn;
+extern byte Pbtn;
 
 extern boolean pairRequested;
 
