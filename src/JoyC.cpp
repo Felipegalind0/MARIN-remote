@@ -203,14 +203,14 @@ void print_JoyC_center_values(){
 }
 
 void print_JoyC_min_max_values(){
-    Serial.print("Joyc_X_min: ");
-    Serial.print(Joyc_X_min);
+    Serial.print("Joyc_X_raw_min: ");
+    Serial.print(Joyc_X_raw_min);
     Serial.print(" Joyc_X_max: ");
     Serial.print(Joyc_X_max);
-    Serial.print(" Joyc_Y_min: ");
-    Serial.print(Joyc_Y_min);
-    Serial.print(" Joyc_Y_max: ");
-    Serial.println(Joyc_Y_max);
+    Serial.print(" Joyc_Y_raw_min: ");
+    Serial.print(Joyc_Y_raw_min);
+    Serial.print(" Joyc_Y_raw_max: ");
+    Serial.println(Joyc_Y_raw_max);
 }
 
 void print_JoyC_mapped_values(){
@@ -221,11 +221,11 @@ void print_JoyC_mapped_values(){
 }
 
 void recalculate_X_center(){
-    Joyc_X_center = (JoyC_X_raw + Joyc_X_center + Joyc_X_min + Joyc_X_max) / 4;
+    Joyc_X_center = (JoyC_X_raw + Joyc_X_center + Joyc_X_raw_min + Joyc_X_max) / 4;
 }
 
 void recalculate_Y_center(){
-    Joyc_Y_center = (JoyC_Y_raw + Joyc_Y_center + Joyc_Y_min + Joyc_Y_max) / 4;
+    Joyc_Y_center = (JoyC_Y_raw + Joyc_Y_center + Joyc_Y_raw_min + Joyc_Y_raw_max) / 4;
 }
 
 void JoyC_loop(){
@@ -255,12 +255,12 @@ void JoyC_loop(){
 
     int abs_delta_X =  abs(delta_X);
 
-    if (JoyC_X_raw < Joyc_X_min) { // if the raw X value is less than the minimum value
+    if (JoyC_X_raw < Joyc_X_raw_min) { // if the raw X value is less than the minimum value
         JoyC_In_X_DeadZone = false;
 
-        Joyc_X_min = JoyC_X_raw;
+        Joyc_X_raw_min = JoyC_X_raw;
 
-        JoyC_X = 0;
+        JoyC_X = 1;
     }
 
     else if (JoyC_X_raw > Joyc_X_max) { // if the raw X value is greater than the maximum value
@@ -268,7 +268,7 @@ void JoyC_loop(){
     
         Joyc_X_max = JoyC_X_raw;
 
-        JoyC_X = 100;
+        JoyC_X = 99;
     }
 
     else if(abs_delta_X < JoyC_X_deadzone){ // if the raw X value is within the deadzone
@@ -298,7 +298,7 @@ void JoyC_loop(){
 
     else { // if the raw X value is outside the deadzone and within the min and max values
         JoyC_In_X_DeadZone = false;
-         JoyC_X = map(JoyC_X_raw, Joyc_X_min, Joyc_X_max, 0, 100);
+         JoyC_X = map(JoyC_X_raw, Joyc_X_raw_min, Joyc_X_max, 1, 99);
     }
 
 
@@ -307,19 +307,19 @@ void JoyC_loop(){
     int abs_delta_Y =  abs(delta_Y);
 
 
-    if (JoyC_Y_raw < Joyc_Y_min) { // if the Y raw value is less than the minimum value
+    if (JoyC_Y_raw < Joyc_Y_raw_min) { // if the Y raw value is less than the minimum value
         JoyC_In_y_DeadZone = false;
-        Joyc_Y_min = JoyC_Y_raw;
+        Joyc_Y_raw_min = JoyC_Y_raw;
 
-        JoyC_Y = 0;
+        JoyC_Y = 1;
 
     }
 
-    else if (JoyC_Y_raw > Joyc_Y_max) { // if the raw Y value is greater than the maximum value
+    else if (JoyC_Y_raw > Joyc_Y_raw_max) { // if the raw Y value is greater than the maximum value
         JoyC_In_y_DeadZone = false;
-        Joyc_Y_max = JoyC_Y_raw;
+        Joyc_Y_raw_max = JoyC_Y_raw;
 
-        JoyC_Y = 100;
+        JoyC_Y = 99;
 
     }
 
@@ -355,25 +355,35 @@ void JoyC_loop(){
 
     else { // if the raw Y value is outside the deadzone and within the min and max values
         JoyC_In_y_DeadZone = false;
-         JoyC_Y = map(JoyC_Y_raw, Joyc_Y_min, Joyc_Y_max, 0, 100);
+         JoyC_Y = map(JoyC_Y_raw, Joyc_Y_raw_min, Joyc_Y_raw_max, 1, 99);
     }
+
+
+
+    
+
+    boolean print_JoyC_Up_Down_Left_Right = false;
 
 
     if (JoyC_Xinput){
         // determine left/right and up/down
         if (JoyC_X < 25){
 
-            if (JoyC_X_left_right == 0){
+            if (JoyC_X_left_right == 0){ // if the X value was previously in the deadzone
                 JoyC_left = true;
-                Serial.print("left");
+                if (print_JoyC_Up_Down_Left_Right){
+                    Serial.print("left");
+                }
             }
             JoyC_X_left_right = -1;
         }
         else if (JoyC_X > 75){
 
-            if (JoyC_X_left_right == 0){
+            if (JoyC_X_left_right == 0){ // if the X value was previously in the deadzone
                 JoyC_right = true;
-                Serial.print("right");
+                if (print_JoyC_Up_Down_Left_Right){
+                    Serial.print("right");
+                }
             }
 
             JoyC_X_left_right = 1;
@@ -384,17 +394,21 @@ void JoyC_loop(){
 
         if (JoyC_Y < 25){
 
-            if (JoyC_Y_up_down == 0){
+            if (JoyC_Y_up_down == 0){ // if the Y value was previously in the deadzone
                 JoyC_down = true;
-                Serial.print("down");
+                if (print_JoyC_Up_Down_Left_Right){
+                    Serial.print("down");
+                }
             }
             JoyC_Y_up_down = -1;
         }
         else if (JoyC_Y > 75){
 
-            if (JoyC_Y_up_down == 0){
+            if (JoyC_Y_up_down == 0){   // if the Y value was previously in the deadzone
                 JoyC_up = true;
-                Serial.print("up");
+                if (print_JoyC_Up_Down_Left_Right){
+                    Serial.print("up");
+                }
             }
 
             JoyC_Y_up_down = 1;
@@ -414,23 +428,26 @@ void JoyC_loop(){
 \
             // Serial.print("WAbort: ");
             // Serial.print(Warn_User_WiFi_Will_Be_Init_Selector_Abort);
+            
+            if (print_JoyC_Up_Down_Left_Right){
+                Serial.print(" Jup:");
+                Serial.print(JoyC_up);
 
-            Serial.print(" Jup:");
-            Serial.print(JoyC_up);
+                Serial.print(" Jdown:");
+                Serial.print(JoyC_down);
 
-            Serial.print(" Jdown:");
-            Serial.print(JoyC_down);
+                Serial.print(" Jleft:");
+                Serial.print(JoyC_left);
 
-            Serial.print(" Jleft:");
-            Serial.print(JoyC_left);
+                Serial.print(" Jright:");
+                Serial.print(JoyC_right);
 
-            Serial.print(" Jright:");
-            Serial.print(JoyC_right);
+                Serial.print(" Jntrtc:");
+                Serial.print(JoyC_needs_to_return_to_center);
 
-            Serial.print(" Jntrtc:");
-            Serial.print(JoyC_needs_to_return_to_center);
+                Serial.println();
+            }
 
-            Serial.println();
 
 
             Warn_User_WiFi_Will_Be_Init_Selector_Abort = !Warn_User_WiFi_Will_Be_Init_Selector_Abort;

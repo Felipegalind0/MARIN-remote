@@ -120,7 +120,7 @@ long push (>1sec) of power button: switch mode between standig and demo(circle)
 #include "LCD.h"
 #include "COMS.h"
 #include "Wireless.h"
-#include <Vector.h>
+//#include <Vector.h>
 #include <Wire.h>
 #include "JoyC.h"
 
@@ -132,6 +132,8 @@ long push (>1sec) of power button: switch mode between standig and demo(circle)
 TaskHandle_t Task0, Task1;
 
 SemaphoreHandle_t syncSemaphore;
+
+
 
 void update_status(String status) {
   exec_status = status;
@@ -281,6 +283,10 @@ void exec_RealTcode() {
     JoyC_loop();
 
     LCD_loop();
+
+    if (robot_connected) {
+        sendData();
+    }
 
     if(M5.BtnA.pressedFor(1000)){
       Serial.println("Button A was pressed for 1 second");
@@ -586,7 +592,8 @@ void BackgroundTask( void * pvParameters ) {
   }
 }
 
-
+#define RealTcore 1
+#define BackgroundCore 0
 
 void setup() {
  

@@ -2,17 +2,9 @@
 #include "LCD.h"
 #include <WebSerial.h>
 
+uint8_t broadcastAddress[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Array to store the MAC address
 
 
-float vBatt, voltAve             = -1.0;
-
-float vBatt_min = 3.3, vBatt_max = 4.1;
-
-float deviceTemp = -1.0;
-
-int perCentBatt = -1;
-
-boolean isCharging = false;
 
 boolean debug_core0 = true;
 boolean debug_core1 = false;
@@ -32,6 +24,8 @@ boolean WiFi_With_Remote_Name_Found = false;
 
 boolean robot_wifi_in_range = false;
 
+boolean robot_connected = false;
+
 //boolean Should_Init_WiFi = false;
 
 boolean WiFi_Is_Initialized = false;
@@ -46,11 +40,31 @@ boolean Warn_User_WiFi_Will_Be_Init_Selector_Abort = 0;
 
 
 
+
+
+float deviceTemp = -1.0;
+
+
+//-----------------Battery Variables-----------------
+
+
+int perCentBatt = -1;
+
+float vBatt, voltAve             = -1.0;
+
+float vBatt_min = 3.3, vBatt_max = 4.1;
+
+boolean isCharging = false;
+
+
+
+
+
 String exec_status = "OFF";
 boolean exec_status_has_changed = false;
 
 
-
+//-----------------LCD Variables-----------------
 uint8_t lcd_brightness = 12;
 
 
@@ -85,19 +99,7 @@ int16_t motorLdir = 0, motorRdir = 0;  // 0:stop 1:+ -1:-
 
 int16_t punchPwr, punchPwr2, punchDur, punchCountL = 0, punchCountR = 0;
 
-uint32_t Joyc_X_min = 500, Joyc_X_center = 2000, Joyc_X_max = 3500, Joyc_Y_min = 500, Joyc_Y_center = 2000, Joyc_Y_max = 3500, JoyC_X_raw = 2000, JoyC_Y_raw = 2000, JoyC_X_raw_prev = 2000, JoyC_Y_raw_prev = 2000;
 
-byte JoyC_X_deadzone = 200, JoyC_Y_deadzone = 200;
-
-byte JoyC_X = 50, JoyC_Y = 50;
-
-boolean JoyC_btn = false;
-
-float JoyC_r = 0;
-
-float JoyC_Phi = 0;
-
-byte JoyC_X_Cycles_In_Deadzone = 0, JoyC_Y_Cycles_In_Deadzone = 0;
 
 byte demoMode = 0;
 
@@ -113,11 +115,26 @@ boolean pairRequested = false;
 
 
 //-----------------Joystick Variables-----------------
+
+uint32_t Joyc_X_raw_min = 500, Joyc_X_center = 2000, Joyc_X_max = 3500, Joyc_Y_raw_min = 500, Joyc_Y_center = 2000, Joyc_Y_raw_max = 3500, JoyC_X_raw = 2000, JoyC_Y_raw = 2000, JoyC_X_raw_prev = 2000, JoyC_Y_raw_prev = 2000;
+
+byte JoyC_X_deadzone = 200, JoyC_Y_deadzone = 200;
+
+byte JoyC_X = 50, JoyC_Y = 50;
+
+float JoyC_r = 0;
+
+float JoyC_Phi = 0;
+
+byte JoyC_X_Cycles_In_Deadzone = 0, JoyC_Y_Cycles_In_Deadzone = 0;
+
 boolean JoyC_In_X_DeadZone = true;
 boolean JoyC_In_y_DeadZone = true;
 
 int JoyC_X_left_right = 0;
 int JoyC_Y_up_down    = 0;
+
+boolean JoyC_btn = false;
 
 boolean JoyC_left = false;
 boolean JoyC_right = false;
@@ -127,6 +144,8 @@ boolean JoyC_down = false;
 boolean JoyC_needs_to_return_to_center = false;
 
 boolean JoyC_Xinput = false;
+
+
 
 //-----------------Sleep Variables-----------------
 int sleep_enter_timer = 0;
@@ -140,9 +159,6 @@ boolean is_sleeping = false;
 
 int x = 0;  // Defines robot rotation rate    + = R     &   - = L
 int y = 0;  // Defines robot FWD/BACK         + = FWD   &   - = BACK
-
-
-Vector<Network> WiFi_Networks = {};
 
 int n_WiFi_Networks = 0;
 

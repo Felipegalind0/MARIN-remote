@@ -4,11 +4,17 @@
 #define btnCounter 10
 #define logCounter 100
 
-#define RealTcore 1
-#define BackgroundCore 0
 
 #include <M5StickCPlus.h>
-#include <Vector.h>
+//#include <Vector.h>
+
+
+
+//-----------------System Variables-----------------
+
+
+#define RealTcore 1
+#define BackgroundCore 0
 
 struct Network {
   String ssid;
@@ -16,18 +22,16 @@ struct Network {
   int rssi;
 };
 
+
+extern uint8_t broadcastAddress[6]; // Array to store the MAC address
+
 extern boolean isCharging;
 
 extern boolean debug_core0, debug_core1;
 
 extern float deviceTemp;
 
-
-
-
 extern int x, y;
-
-extern Vector<Network> WiFi_Networks;
 
 extern int n_WiFi_Networks;
 
@@ -57,6 +61,8 @@ extern String exec_status;
 extern boolean exec_status_has_changed;
 
 extern boolean robot_wifi_in_range;
+
+extern boolean robot_connected;
 
 extern uint8_t lcd_brightness;
 
@@ -107,7 +113,10 @@ extern int16_t ipowerL, ipowerR;
 extern int16_t motorLdir, motorRdir;
 extern int16_t punchPwr, punchPwr2, punchDur, punchCountL, punchCountR;
 
-extern uint32_t Joyc_X_min, Joyc_X_center, Joyc_X_max, Joyc_Y_min, Joyc_Y_center, Joyc_Y_max, JoyC_X_raw, JoyC_Y_raw, JoyC_X_raw_prev, JoyC_Y_raw_prev;
+extern uint32_t Joyc_X_raw_min, Joyc_X_center, Joyc_X_max, Joyc_Y_raw_min, Joyc_Y_center, Joyc_Y_raw_max, JoyC_X_raw, JoyC_Y_raw, JoyC_X_raw_prev, JoyC_Y_raw_prev;
+
+
+// 
 
 extern byte JoyC_X_deadzone, JoyC_Y_deadzone;
 

@@ -19,7 +19,7 @@
 
 #include <ESPAsyncWebServer.h>
 #include <WebSerial.h>
-#include <Vector.h>
+//#include <Vector.h>
 
 // Structure example to receive data
 // Must match the sender structure
@@ -187,8 +187,66 @@ void Wireless_Setup(){
 
 }
 
+
+
+
+void sendData() {
+  // Structure and data to send as before
+  struct_message myData;
+
+  // Create a string formatted as (+/-)XX(+/-)YY
+
+  String message = "c";
+
+  if (JoyC_X < 10) {
+    message += "+0";
+  }
+  else {
+    message += "+";
+  }
+
+  message += String(JoyC_X);
+
+  if (JoyC_Y < 10) {
+    message += "+0";
+  }
+  else {
+    message += "+";
+  }
+
+  message += String(JoyC_Y);
+
+  //strcpy(myData.a, (if (x < 0) ? "" : "+") + String(x) + (if (y < 0) ? "" : "+") + String(y));
+
+  // Move message to myData
+  message.toCharArray(myData.a, 8);
+
+  // Send message via ESP-NOW
+  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));
+  
+  if (result == ESP_OK) {
+    Serial.println("Sent with success, message: " + String(myData.a));
+  }
+  else {
+    Serial.println("Error sending the data");
+  }
+}
+
+
+
+
+
+void convertMacAddress(const String &macStr, uint8_t *macAddr) {
+    // Assumes macStr is in the format "XX:XX:XX:XX:XX:XX"
+    sscanf(macStr.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", 
+           &macAddr[0], &macAddr[1], &macAddr[2], &macAddr[3], &macAddr[4], &macAddr[5]);
+}
+
+
 // returns dict(map) of SSIDs with ssid, MAC, and RSSI
 void get_ssids(){
+
+  robot_wifi_in_range = false;
   
   n_WiFi_Networks = WiFi.scanNetworks(); // Get the number of networks found
 
@@ -199,7 +257,7 @@ void get_ssids(){
 
   for (int i = 0; i < n_WiFi_Networks; i++) { // Loop through each network
 
-    robot_wifi_in_range = false;
+    
 
     // Network network;
     // network.ssid = WiFi.SSID(i);
@@ -227,6 +285,9 @@ void get_ssids(){
       if (Robot_MAC == "-") {
         Robot_MAC = WiFi.BSSIDstr(i);
       }
+      if (Robot_ssid == "-") {
+        Robot_ssid = WiFi.SSID(i);
+      }
       robot_wifi_in_range = true;
       Serial.print("\n(Robot WiFi) ");
       //Serial.println(WiFi.SSID(i) + " " + WiFi.BSSIDstr(i) + " " + String(WiFi.RSSI(i))+ "\n");
@@ -242,6 +303,31 @@ void get_ssids(){
 
   Serial.println("-------------------------------------------------\n");
 
+  if (robot_wifi_in_range) {
+    Serial.println("SUCCESS: Robot WiFi found :D Robot_ssid: " + Robot_ssid + " Robot_MAC: " + Robot_MAC + "\n");
+    // Convert Robot_MAC String to byte array
+    convertMacAddress(Robot_MAC, broadcastAddress);
+
+    
+    // Setup ESPNOW peer
+    esp_now_peer_info_t peerInfo;
+    memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+    peerInfo.channel = 0;
+    peerInfo.encrypt = false;
+
+    // Add peer
+    if (esp_now_add_peer(&peerInfo) != ESP_OK){
+      Serial.println("Failed to add peer");
+      return;
+    }
+
+    Serial.println("Peer added");
+
+    robot_connected = true;
+
+  }
+
+
   if (WiFi_With_Remote_Name_Found) {
     Serial.println("ERROR: WiFi With same name as remote name found, please change the remote name in creds.h\n");
   }
@@ -249,9 +335,6 @@ void get_ssids(){
    
   }
 
-  if (robot_wifi_in_range) {
-    Serial.println("SUCCESS: Robot WiFi found :D Robot_ssid: " + Robot_ssid + " Robot_MAC: " + Robot_MAC + "\n");
-  }
 
 
 }

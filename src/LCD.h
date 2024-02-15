@@ -38,7 +38,9 @@
 
 void LCD_loop();
 
-void LCD_Print_Counter();
+void LCD_Print_RealT_Times();
+
+void LCD_Print_JoyC_widget();
 
 void LCD_flush();
 
@@ -75,5 +77,9 @@ void LCD_WiFi_Initializing_Message();
 uint16_t invertColor(uint16_t color);
 
 void LCD_Status_Message();
+
+void LCD_Print_JoyC_widget();
+
+void LCD_CPU_Widget();
 
 #endif
