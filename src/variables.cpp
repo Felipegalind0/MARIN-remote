@@ -32,10 +32,38 @@ boolean WiFi_Is_Initialized = false;
 
 boolean WiFi_Is_Initializing = false;
 
+boolean WiFi_Just_Finished_Initializing = false;
+
 byte Warn_User_WiFi_Will_Be_Init = 0;
 byte Warn_User_WiFi_Will_Be_Init_Threshold = 100;
 
 boolean Warn_User_WiFi_Will_Be_Init_Selector_Abort = 0;
+
+boolean menu_active = false;
+
+byte robot_state = UNKNOWN_ARMED_STATUS;
+
+// boolean robot_ARM_requested = false;
+// boolean robot_DISARM_requested = false;
+
+int robot_menu_X_selector = 0;
+
+int robot_menu_Y_selector = 0;
+
+
+String robot_msg = "";
+
+//-----------------Robot IMU Variables-----------------
+
+//orientation
+float robot_X_deg = 0.0, robot_Y_deg = 0.0, robot_Z_deg = 0.0;
+
+
+float Avg_IMU_X_deg_per_sec = 0.0, Avg_IMU_Y_deg_per_sec = 0.0, Avg_IMU_Z_deg_per_sec = 0.0;
+
+//-----------------Robot Motor Variables-----------------
+int Rmotor = 0, Lmotor = 0;
+boolean isArmed         = false;
 
 
 
@@ -49,6 +77,7 @@ float deviceTemp = -1.0;
 
 
 int perCentBatt = -1;
+int Robot_perCentBatt = -1;
 
 float vBatt, voltAve             = -1.0;
 
@@ -122,6 +151,10 @@ byte JoyC_X_deadzone = 200, JoyC_Y_deadzone = 200;
 
 byte JoyC_X = 50, JoyC_Y = 50;
 
+byte Robot_JoyC_X = 50, Robot_JoyC_Y = 50;
+
+float Robot_JoyC_r = 0, Robot_JoyC_Phi = 0;
+
 float JoyC_r = 0;
 
 float JoyC_Phi = 0;
@@ -136,10 +169,10 @@ int JoyC_Y_up_down    = 0;
 
 boolean JoyC_btn = false;
 
-boolean JoyC_left = false;
-boolean JoyC_right = false;
-boolean JoyC_up = false;
-boolean JoyC_down = false;
+// boolean JoyC_left = false;
+// boolean JoyC_right = false;
+// boolean JoyC_up = false;
+// boolean JoyC_down = false;
 
 boolean JoyC_needs_to_return_to_center = false;
 
@@ -169,6 +202,8 @@ int64_t RealTcode_start_time = 0, RealTcode_end_time = 0, RealTcode_execution_ti
 int64_t BackgroundTask_execution_time_start = 0, BackgroundTask_execution_time_end = 0, BackgroundTask_execution_time = 0, BackgroundTask_total_execution_time = 0, BackgroundTask_no_execution_time = 0;
 
 double RealTcode_CPU_load = 0.0, BackgroundTask_CPU_load = 0.0;
+
+double Robot_RealTcode_CPU_load = 0.0, Robot_BackgroundTask_CPU_load = 0.0;
 
 
 void resetVar() {

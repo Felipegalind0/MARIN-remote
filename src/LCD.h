@@ -1,6 +1,10 @@
 #ifndef __LCD_H
 #define __LCD_H
 
+#include <M5StickCPlus.h>
+#include "IO.h"
+#include "variables.h"
+#include "COMS.h"
 
 #define LCDV_MID 60
 
@@ -55,7 +59,8 @@ void LCD_calib1_complete_Message(void);
 
 void LCD_calib2_Message(void);
 
-void LCD_DispBatVolt();
+// void LCD_DispBatVolt();
+void LCD_DispBatVolt(int LCD_BTv_X, int LCD_BTv_Y, int bt_percent, boolean bt_charging);
 void LCD_DispAngle();
 void LCD_Update_Mode();
 
@@ -80,6 +85,10 @@ void LCD_Status_Message();
 
 void LCD_Print_JoyC_widget();
 
-void LCD_CPU_Widget();
+// void LCD_CPU_Widget();
+void LCD_CPU_Widget(int LCD_CPU_X, int LCD_CPU_Y,  double bk_cpu_percent, double rt_cpu_load);
+
+void LCD_Western_Artificial_Horizon();
+
 
 #endif

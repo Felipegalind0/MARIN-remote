@@ -49,6 +49,7 @@ class UNIT_JOYC {
     void resetCounter(void);
 };
 
+void cartesianToPolar(byte *x, byte *y, float *r, float *phi);                                       
 
 void JoyC_setup();
 

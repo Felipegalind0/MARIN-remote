@@ -7,21 +7,41 @@
 
 #include <cmath> // Include the cmath library for sqrt and atan2 functions
 
-void cartesianToPolar() {
+void cartesianToPolar(byte *x, byte *y, float *r, float *phi) {
+    // // Normalize x and y to have 0,0 at the center
+    // float x_normalized = JoyC_X - 50.0;
+    // float y_normalized = JoyC_Y - 50.0;
+
+    // // Calculate the radius
+    // JoyC_r = sqrt(x_normalized * x_normalized + y_normalized * y_normalized);
+
+    // // Calculate the angle in radians
+    // JoyC_Phi = atan2(y_normalized, x_normalized);
+
+    // // for angle in degrees, uncomment the following line
+    // JoyC_Phi = JoyC_Phi * (180.0 / M_PI);
+
+    // //Serial.println("r: " + String(JoyC_r) + " φ: " + String(JoyC_Phi));
+
+
+
+    // UPDATED TO USE POINTERS
+
     // Normalize x and y to have 0,0 at the center
-    float x_normalized = JoyC_X - 50.0;
-    float y_normalized = JoyC_Y - 50.0;
+    float x_normalized = *x - 50.0;
+    float y_normalized = *y - 50.0;
 
     // Calculate the radius
-    JoyC_r = sqrt(x_normalized * x_normalized + y_normalized * y_normalized);
+    *r = sqrt(x_normalized * x_normalized + y_normalized * y_normalized);
 
     // Calculate the angle in radians
-    JoyC_Phi = atan2(y_normalized, x_normalized);
+    *phi = atan2(y_normalized, x_normalized);
 
     // for angle in degrees, uncomment the following line
-    JoyC_Phi = JoyC_Phi * (180.0 / M_PI);
+    *phi = *phi * (180.0 / M_PI);
 
     //Serial.println("r: " + String(JoyC_r) + " φ: " + String(JoyC_Phi));
+
 }
 
 
@@ -237,8 +257,7 @@ void JoyC_loop(){
 
     JoyC_btn = !joyc.getButtonStatus();
 
-    cartesianToPolar();
-
+    cartesianToPolar(&JoyC_X, &JoyC_Y, &JoyC_r, &JoyC_Phi);
     //print_JoyC_raw_values();
 
     //print_JoyC_center_values();
@@ -370,23 +389,29 @@ void JoyC_loop(){
         if (JoyC_X < 25){
 
             if (JoyC_X_left_right == 0){ // if the X value was previously in the deadzone
-                JoyC_left = true;
+                //JoyC_left = true;
+
+                JoyC_X_left_right =  JoyC_selector_LEFT;
+
+
+
                 if (print_JoyC_Up_Down_Left_Right){
                     Serial.print("left");
                 }
             }
-            JoyC_X_left_right = -1;
+            //JoyC_X_left_right = -1;
         }
         else if (JoyC_X > 75){
 
             if (JoyC_X_left_right == 0){ // if the X value was previously in the deadzone
-                JoyC_right = true;
+                //JoyC_right = true;
+                JoyC_X_left_right =  JoyC_selector_RIGHT;
                 if (print_JoyC_Up_Down_Left_Right){
                     Serial.print("right");
                 }
             }
 
-            JoyC_X_left_right = 1;
+            //JoyC_X_left_right = 1;
         }
         else {
             JoyC_X_left_right = 0;
@@ -395,72 +420,146 @@ void JoyC_loop(){
         if (JoyC_Y < 25){
 
             if (JoyC_Y_up_down == 0){ // if the Y value was previously in the deadzone
-                JoyC_down = true;
+                //JoyC_down = true;
+
+                JoyC_Y_up_down =  JoyC_selector_DOWN;
                 if (print_JoyC_Up_Down_Left_Right){
                     Serial.print("down");
                 }
             }
-            JoyC_Y_up_down = -1;
+            //JoyC_Y_up_down = -1;
         }
         else if (JoyC_Y > 75){
 
             if (JoyC_Y_up_down == 0){   // if the Y value was previously in the deadzone
-                JoyC_up = true;
+                //JoyC_up = true;
+                JoyC_Y_up_down =  JoyC_selector_UP;
                 if (print_JoyC_Up_Down_Left_Right){
                     Serial.print("up");
                 }
             }
 
-            JoyC_Y_up_down = 1;
+            //JoyC_Y_up_down = 1;
         }
         else {
             JoyC_Y_up_down = 0;
         }
 
-        if (JoyC_X_left_right == 0 && JoyC_Y_up_down == 0){
+        // if both in deadzne
+        if (JoyC_In_X_DeadZone && JoyC_In_y_DeadZone){
+        //if (JoyC_X_left_right == 0 && JoyC_Y_up_down == 0){
             JoyC_needs_to_return_to_center = false;
         }
 
 
-        if (Warn_User_WiFi_Will_Be_Init && 
-        (JoyC_up || JoyC_down || JoyC_left || JoyC_right) && 
-        !JoyC_needs_to_return_to_center){
-\
+        if (Warn_User_WiFi_Will_Be_Init && !WiFi_Is_Initialized &&
+        ( JoyC_X_left_right || JoyC_Y_up_down) && !JoyC_needs_to_return_to_center){
             // Serial.print("WAbort: ");
             // Serial.print(Warn_User_WiFi_Will_Be_Init_Selector_Abort);
             
-            if (print_JoyC_Up_Down_Left_Right){
-                Serial.print(" Jup:");
-                Serial.print(JoyC_up);
+            // if (print_JoyC_Up_Down_Left_Right){
+            //     Serial.print(" Jup:");
+            //     Serial.print(JoyC_up);
 
-                Serial.print(" Jdown:");
-                Serial.print(JoyC_down);
+            //     Serial.print(" Jdown:");
+            //     Serial.print(JoyC_down);
 
-                Serial.print(" Jleft:");
-                Serial.print(JoyC_left);
+            //     Serial.print(" Jleft:");
+            //     Serial.print(JoyC_left);
 
-                Serial.print(" Jright:");
-                Serial.print(JoyC_right);
+            //     Serial.print(" Jright:");
+            //     Serial.print(JoyC_right);
 
-                Serial.print(" Jntrtc:");
-                Serial.print(JoyC_needs_to_return_to_center);
+            //     Serial.print(" Jntrtc:");
+            //     Serial.print(JoyC_needs_to_return_to_center);
 
-                Serial.println();
-            }
+            //     Serial.println();
+            // }
+        //(JoyC_UP_DOWN_selector || JoyC_LEFT_RIGHT_selector)){
+        // ( || JoyC_down || JoyC_left || JoyC_right) && 
+        // !JoyC_needs_to_return_to_center){
+            // Serial.print("WAbort: ");
+            // Serial.print(Warn_User_WiFi_Will_Be_Init_Selector_Abort);
+            
+            // if (print_JoyC_Up_Down_Left_Right){
+            //     Serial.print(" Jup:");
+            //     Serial.print(JoyC_up);
+
+            //     Serial.print(" Jdown:");
+            //     Serial.print(JoyC_down);
+
+            //     Serial.print(" Jleft:");
+            //     Serial.print(JoyC_left);
+
+            //     Serial.print(" Jright:");
+            //     Serial.print(JoyC_right);
+
+            //     Serial.print(" Jntrtc:");
+            //     Serial.print(JoyC_needs_to_return_to_center);
+
+            //     Serial.println();
+            // }
 
 
 
             Warn_User_WiFi_Will_Be_Init_Selector_Abort = !Warn_User_WiFi_Will_Be_Init_Selector_Abort;
+            Warn_User_WiFi_Will_Be_Init = 0;
 
-            JoyC_up = false;
-            JoyC_down = false;
-            JoyC_left = false;
-            JoyC_right = false;
+
+            // JoyC_up = false;
+            // JoyC_down = false;
+            // JoyC_left = false;
+            // JoyC_right = false;
 
             JoyC_needs_to_return_to_center = true;
+
             
-            Warn_User_WiFi_Will_Be_Init = 1;
+            Serial.println("JoyC_needs_to_return_to_center = 1 Warn_User_WiFi_Will_Be_Init:" + String(Warn_User_WiFi_Will_Be_Init));
+            
+           
         } // if the Init WiFi Warning is active and the user moves the joystick, toggle the selector
+
+        //Serial.println("menu_active: " + String(menu_active) + " JoyC_needs_to_return_to_center: " + String(JoyC_needs_to_return_to_center) + " JoyC_X_left_right: " + String(JoyC_X_left_right) + " JoyC_Y_up_down: " + String(JoyC_Y_up_down) + " robot_menu_X_selector: " + String(robot_menu_X_selector) + " robot_menu_Y_selector: " + String(robot_menu_Y_selector) + " robot_state: " + String(robot_state) + " robot_msg: " + robot_msg);
+
+        else if(menu_active && !JoyC_needs_to_return_to_center){
+            
+            if ( JoyC_Y_up_down == JoyC_selector_UP){
+                JoyC_Y_up_down = JoyC_selector_CENTER;
+                JoyC_needs_to_return_to_center = true;
+            //if (JoyC_up){
+                if (robot_menu_Y_selector < Robot_menu_max_Y){
+                    robot_menu_Y_selector++;
+
+                }
+                else {
+                    Serial.println("JoyC_up, but robot_menu_Y_selector is already at max");
+                }
+            }
+            else if (JoyC_Y_up_down == JoyC_selector_DOWN){
+                JoyC_Y_up_down = JoyC_selector_CENTER;
+                JoyC_needs_to_return_to_center = true;
+                if (robot_menu_Y_selector > Robot_menu_min_Y){
+                    robot_menu_Y_selector--;
+                }
+                else {
+                    Serial.println("JoyC_down, but robot_menu_Y_selector is already at min");
+                }
+            }
+            else if (JoyC_X_left_right == JoyC_selector_LEFT){
+                JoyC_X_left_right = JoyC_selector_CENTER;
+                JoyC_needs_to_return_to_center = true;
+                if (robot_menu_X_selector > Robot_menu_min_X){
+                    robot_menu_X_selector--;
+                }
+            }
+            else if (JoyC_X_left_right == JoyC_selector_RIGHT){
+                JoyC_X_left_right = JoyC_selector_CENTER;
+                JoyC_needs_to_return_to_center = true;
+                if (robot_menu_X_selector < Robot_menu_max_X){
+                    robot_menu_X_selector++;
+                }
+            }
+        }
 
     }
 

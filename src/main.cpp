@@ -214,6 +214,8 @@ void Movement_Setup() {
 boolean print_RealTcode_start_time = false;
 
 boolean print_Warn_User_WiFi_Will_Be_Init = false;
+
+#define DEBUG_robot_menu_active 1
 void exec_RealTcode() {
 
     // Serial.print("WiFi_Is_Initialized: ");
@@ -241,9 +243,16 @@ void exec_RealTcode() {
     }
 
     // If the device is not booted and threshold has not been reached, increase the counter so that the warning is displayed
-    if (!WiFi_Is_Initialized && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold)
+    if (!WiFi_Is_Initialized && !WiFi_Is_Initializing && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold)
     {
-      Warn_User_WiFi_Will_Be_Init++;
+
+      if (!Warn_User_WiFi_Will_Be_Init_Selector_Abort){
+        Warn_User_WiFi_Will_Be_Init++;
+      }
+      else{
+        Warn_User_WiFi_Will_Be_Init = 1;
+      }
+      
       //Warn_User_WiFi_Will_Be_Init = 1; // uncomment to disable warning timeout
       
       //enable JoyC_Xinput
@@ -284,6 +293,8 @@ void exec_RealTcode() {
 
     LCD_loop();
 
+    //Serial.println("menu_active: " + String(menu_active) + " robot_ARM_requested: " + String(robot_ARM_requested));
+
     if (robot_connected) {
         sendData();
     }
@@ -299,6 +310,65 @@ void exec_RealTcode() {
     if(M5.BtnA.wasPressed()){
       Serial.println("Button A was pressed");
       Abtn = 1;
+
+      if(menu_active){
+
+          if(robot_menu_X_selector == 0 &&
+          robot_menu_Y_selector == 0){
+            //robot_ARM_requested = true;
+            if (robot_state == ROBOT_DISARMED){
+              robot_state = ROBOT_ARMING;
+            }
+            else {
+              robot_state = ROBOT_DISARMING;
+            }
+            
+            menu_active = false;
+            JoyC_Xinput = false;
+            LCD_flush();
+          }
+
+          if(robot_menu_X_selector == 0 &&
+          robot_menu_Y_selector == 1){
+            //robot_ARM_requested = true;
+            robot_state = TAKEOFF_REQUESTED;
+            
+            menu_active = false;
+            JoyC_Xinput = false;
+            LCD_flush();
+          }
+
+    
+      }
+      
+      else if (!WiFi_Is_Initialized && !WiFi_Is_Initializing && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold){
+        if (Warn_User_WiFi_Will_Be_Init_Selector_Abort){
+          Warn_User_WiFi_Will_Be_Init = 0;
+          LCD_flush();
+        }
+        else{
+          Warn_User_WiFi_Will_Be_Init = 100;
+        }
+      }
+
+
+      else{
+        menu_active = true;
+        JoyC_Xinput = true;
+        LCD_flush();
+      }
+      
+      #ifdef DEBUG_robot_menu_active
+        Serial.print("menu_active: ");
+        Serial.println(menu_active);
+      #endif
+
+      // if (robot_connected){
+
+        
+        
+      // }
+
     }
     else {
       Abtn = 0;
@@ -358,7 +428,7 @@ void exec_RealTcode() {
 
       if ((JoyC_In_X_DeadZone) && (JoyC_In_y_DeadZone)){
 
-        if (sleep_enter_timer > 100){
+        if (sleep_enter_timer > 100 && robot_connected){
 
           enter_sleep();
         }
@@ -498,26 +568,41 @@ void exec_BackgroundTask() {
     if (Warn_User_WiFi_Will_Be_Init >= Warn_User_WiFi_Will_Be_Init_Threshold) {
 
       WiFi_Is_Initializing = true;
+      JoyC_Xinput = false;
       
       Warn_User_WiFi_Will_Be_Init = 0;  
       Serial.println("\nWireless_Setup()");
 
-      RED_LED(1);
+      // xTaskCreatePinnedToCore(
+      //     Wireless_Setup,   /* Function to implement the task */
+      //     "Wireless_Setup", /* Name of the task */
+      //     10000,      /* Stack size in words */
+      //     NULL,       /* Task input parameter */
+      //     -2,          /* Priority of the task */
+      //     NULL,       /* Task handle. */
+      //     BackgroundCore);  /* Core where the task should run */
 
 
       //digitalWrite(LED, HIGH);
+      //yield();  // Yield the processor to other tasks so no other FreeRTOS wireless tasks are pending
       Wireless_Setup();
+      //yield(); // Yield the processor to other tasks so no other FreeRTOS wireless tasks are pending
 
-      Serial.println("\nWireless_Setup() DONE \n");
-
-      RED_LED(0);
       
-      //digitalWrite(LED, LOW);
 
-      WiFi_Is_Initialized = true;
+      return;
     }
 
-    if (pairRequested){
+    if (WiFi_Just_Finished_Initializing) {
+      Serial.println("\nWireless_Setup() DONE \n");
+      LCD_flush();
+      return;
+    }
+
+
+
+
+    if (pairRequested && WiFi_Is_Initialized) {
 
       Serial.println("@RealTcode: is_paired = false; Starting pairing process");
       // Check for pairing
@@ -557,6 +642,11 @@ void BackgroundTask( void * pvParameters ) {
     // Wait for the syncSemaphore to be given by the RealTcode task
 
     exec_BackgroundTask(); // Execute the background task
+
+    //Serial.println("@BackgroundTask: exec DONE");
+
+    yield(); // Yield the processor to other tasks
+
 
     // Record the end time of the loop
     BackgroundTask_execution_time_end = esp_timer_get_time();
