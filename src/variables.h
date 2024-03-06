@@ -35,6 +35,10 @@ enum Robot_Menu_Y_Options {
   ROBOT_MENU_TAKEOFF = 1
 };
 
+enum Wifi_States {
+  WIFI_NOT_INITIALIZED, WIFI_INITIALIZING, WIFI_JUST_INITIALIZED, WIFI_INITIALIZED, WIFI_CONNECTED, WIFI_DISCONNECTED, WIFI_DEACTIVATED
+};
+
 extern uint8_t broadcastAddress[6]; // Array to store the MAC address
 
 
@@ -83,21 +87,23 @@ extern int Robot_perCentBatt;
 extern boolean standing, hasFallen, abortWasHandled, is_paired, is_booted, JoyC_In_X_DeadZone, JoyC_In_y_DeadZone;
 
 
-extern boolean WiFi_Is_Initialized;
+// extern boolean WiFi_Is_Initialized;
 
 extern boolean WiFi_With_Remote_Name_Found;
 
 
-extern boolean WiFi_Is_Initializing;
+// extern boolean WiFi_Is_Initializing;
 
-extern boolean WiFi_Just_Finished_Initializing;
+// extern boolean WiFi_Just_Finished_Initializing;
 
 extern byte Warn_User_WiFi_Will_Be_Init, Warn_User_WiFi_Will_Be_Init_Threshold;
 
 extern boolean Warn_User_WiFi_Will_Be_Init_Selector_Abort;
 
+extern byte WiFi_State;
 
-extern boolean WiFi_connected;
+
+// extern boolean WiFi_connected;
 extern String exec_status;
 extern boolean exec_status_has_changed;
 

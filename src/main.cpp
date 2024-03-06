@@ -243,8 +243,8 @@ void exec_RealTcode() {
     }
 
     // If the device is not booted and threshold has not been reached, increase the counter so that the warning is displayed
-    if (!WiFi_Is_Initialized && !WiFi_Is_Initializing && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold)
-    {
+    //if (!WiFi_Is_Initialized && !WiFi_Is_Initializing && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold)
+    if (WiFi_State != WIFI_INITIALIZED && WiFi_State != WIFI_INITIALIZING && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold){
 
       if (!Warn_User_WiFi_Will_Be_Init_Selector_Abort){
         Warn_User_WiFi_Will_Be_Init++;
@@ -283,7 +283,7 @@ void exec_RealTcode() {
     
 
 
-    if (!(is_paired) && WiFi_Is_Initialized) {
+    if (!(is_paired && WiFi_State == WIFI_INITIALIZED)){ //&& WiFi_Is_Initialized) {
       pairRequested = true;
     }
 
@@ -341,7 +341,9 @@ void exec_RealTcode() {
     
       }
       
-      else if (!WiFi_Is_Initialized && !WiFi_Is_Initializing && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold){
+      // else if (!WiFi_Is_Initialized && !WiFi_Is_Initializing && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold){
+      
+      else if (WiFi_State != WIFI_INITIALIZED && WiFi_State != WIFI_INITIALIZING && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold){
         if (Warn_User_WiFi_Will_Be_Init_Selector_Abort){
           Warn_User_WiFi_Will_Be_Init = 0;
           LCD_flush();
@@ -567,7 +569,8 @@ void exec_BackgroundTask() {
 
     if (Warn_User_WiFi_Will_Be_Init >= Warn_User_WiFi_Will_Be_Init_Threshold) {
 
-      WiFi_Is_Initializing = true;
+      //WiFi_Is_Initializing = true;
+      WiFi_State = WIFI_INITIALIZING;
       JoyC_Xinput = false;
       
       Warn_User_WiFi_Will_Be_Init = 0;  
@@ -593,7 +596,7 @@ void exec_BackgroundTask() {
       return;
     }
 
-    if (WiFi_Just_Finished_Initializing) {
+    if (WiFi_State == WIFI_JUST_INITIALIZED) { //WiFi_Just_Finished_Initializing) {
       Serial.println("\nWireless_Setup() DONE \n");
       LCD_flush();
       return;
@@ -602,7 +605,7 @@ void exec_BackgroundTask() {
 
 
 
-    if (pairRequested && WiFi_Is_Initialized) {
+    if (pairRequested && WiFi_State == WIFI_INITIALIZED){  //WiFi_Is_Initialized) {
 
       Serial.println("@RealTcode: is_paired = false; Starting pairing process");
       // Check for pairing

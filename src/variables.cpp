@@ -26,13 +26,17 @@ boolean robot_wifi_in_range = false;
 
 boolean robot_connected = false;
 
+
+
+byte WiFi_State = WIFI_NOT_INITIALIZED;
+
 //boolean Should_Init_WiFi = false;
 
-boolean WiFi_Is_Initialized = false;
+// boolean WiFi_Is_Initialized = false;
 
-boolean WiFi_Is_Initializing = false;
+// boolean WiFi_Is_Initializing = false;
 
-boolean WiFi_Just_Finished_Initializing = false;
+// boolean WiFi_Just_Finished_Initializing = false;
 
 byte Warn_User_WiFi_Will_Be_Init = 0;
 byte Warn_User_WiFi_Will_Be_Init_Threshold = 100;

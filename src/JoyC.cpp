@@ -452,12 +452,13 @@ void JoyC_loop(){
         }
 
 
-        if (Warn_User_WiFi_Will_Be_Init && !WiFi_Is_Initialized &&
+        if (Warn_User_WiFi_Will_Be_Init && WiFi_State == WIFI_NOT_INITIALIZED &&
         ( JoyC_X_left_right || JoyC_Y_up_down) && !JoyC_needs_to_return_to_center){
             // Serial.print("WAbort: ");
             // Serial.print(Warn_User_WiFi_Will_Be_Init_Selector_Abort);
             
             // if (print_JoyC_Up_Down_Left_Right){
+
             //     Serial.print(" Jup:");
             //     Serial.print(JoyC_up);
 

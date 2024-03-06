@@ -361,11 +361,13 @@ void Wireless_Setup(){
 
     if (WiFi.waitForConnectResult() != WL_CONNECTED) {
         Serial.printf("WiFi Failed!\n");
-        WiFi_connected = false;
+        //WiFi_connected = false;
+        WiFi_State = WIFI_DISCONNECTED;
     }
     else {
 
-      WiFi_connected = true;
+      //WiFi_connected = true;
+      WiFi_State = WIFI_CONNECTED;
   
       Serial.print("Connected to WiFi '");
       Serial.print(ssid);
@@ -420,8 +422,9 @@ void Wireless_Setup(){
 
    
 
-    WiFi_Is_Initialized = true;
-    WiFi_Is_Initializing = false;
+    //WiFi_Is_Initialized = true;
+    //WiFi_Is_Initializing = false;
+    WiFi_State = WIFI_INITIALIZED;
 
     RED_LED(0);
 

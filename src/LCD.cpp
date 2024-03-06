@@ -196,10 +196,12 @@ void LCD_loop(){
     //     LCD_Pairing_Message();
     // }
 
-    if (Warn_User_WiFi_Will_Be_Init && !WiFi_Is_Initializing && !WiFi_Is_Initialized) {
+    // if (Warn_User_WiFi_Will_Be_Init && !WiFi_Is_Initializing && !WiFi_Is_Initialized) {
+    if (Warn_User_WiFi_Will_Be_Init && WiFi_State != WIFI_INITIALIZING && WiFi_State != WIFI_INITIALIZED) {
         LCD_Warn_WiFi_Message();
     }
-    else if (WiFi_Is_Initializing && !WiFi_Is_Initialized) {
+    // else if (WiFi_Is_Initializing && !WiFi_Is_Initialized) {
+    else if (WiFi_State == WIFI_INITIALIZING) {
         LCD_WiFi_Initializing_Message();
         Warn_User_WiFi_Will_Be_Init = false;
     }
