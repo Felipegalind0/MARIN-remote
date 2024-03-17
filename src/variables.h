@@ -28,6 +28,11 @@ enum ROBOT_ARMED_STATUS {
    UNKNOWN_ARMED_STATUS, ROBOT_DISARMED, ROBOT_DISARMING, ROBOT_ARMING, ROBOT_ARMED, TAKEOFF_REQUESTED, TAKING_OFF, LANDING_REQUESTED, LANDING
 };
 
+enum Remote_Menu_X_Options {
+  REMOTE_MENU = -1, 
+  ROBOT_MENU = 0,
+  WIFI_MENU = 1
+};
 
 enum Robot_Menu_Y_Options {
   ROBOT_MENU_LAND = -1, 
@@ -58,9 +63,9 @@ extern boolean isArmed;
 
 # define Robot_menu_max_X 1
 
-extern int robot_menu_X_selector, robot_menu_Y_selector;
+extern int menu_X_selector, menu_Y_selector;
 
-
+extern int menu_min_X, menu_max_X, menu_min_Y, menu_max_Y;
 
 extern String robot_msg;
 

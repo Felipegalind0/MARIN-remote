@@ -311,10 +311,13 @@ void exec_RealTcode() {
       Serial.println("Button A was pressed");
       Abtn = 1;
 
-      if(menu_active){
 
-          if(robot_menu_X_selector == 0 &&
-          robot_menu_Y_selector == 0){
+
+      if(menu_active){ // if the menu is active
+
+        if (menu_X_selector == ROBOT_MENU){
+
+          if(menu_Y_selector == ROBOT_MENU_TOOGLE_ARM){
             //robot_ARM_requested = true;
             if (robot_state == ROBOT_DISARMED){
               robot_state = ROBOT_ARMING;
@@ -328,8 +331,7 @@ void exec_RealTcode() {
             LCD_flush();
           }
 
-          if(robot_menu_X_selector == 0 &&
-          robot_menu_Y_selector == 1){
+          if(menu_Y_selector == ROBOT_MENU_TAKEOFF){
             //robot_ARM_requested = true;
             robot_state = TAKEOFF_REQUESTED;
             
@@ -338,11 +340,13 @@ void exec_RealTcode() {
             LCD_flush();
           }
 
-    
+
+        }
+
       }
+
       
-      // else if (!WiFi_Is_Initialized && !WiFi_Is_Initializing && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold){
-      
+      // else if menu is not active an
       else if (WiFi_State != WIFI_INITIALIZED && WiFi_State != WIFI_INITIALIZING && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold){
         if (Warn_User_WiFi_Will_Be_Init_Selector_Abort){
           Warn_User_WiFi_Will_Be_Init = 0;
@@ -354,7 +358,7 @@ void exec_RealTcode() {
       }
 
 
-      else{
+      else{ // if the menu is not active, activate it
         menu_active = true;
         JoyC_Xinput = true;
         LCD_flush();

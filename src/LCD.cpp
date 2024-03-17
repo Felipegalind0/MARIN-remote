@@ -1,4 +1,4 @@
-
+// --- LCD.cpp ---
 #include "LCD.h"
 
 
@@ -21,8 +21,8 @@ boolean print_updating_battery_voltage = false;
 boolean print_RealT_Times = true;
 
 void LCD_Top_1_line_text(String text, byte text_size, int color, byte widget_x, byte widget_y, byte widget_w, byte widget_h, byte widget_r){
-    canvas.setTextFont(2);
-    canvas.setTextSize(text_size);
+    canvas.setTextFont(text_size);
+    canvas.setTextSize(1);
     canvas.setTextColor(BLACK);
 
     // const int ROBOT_MENU_M_X = 5;
@@ -56,61 +56,138 @@ void LCD_Top_1_line_text(String text, byte text_size, int color, byte widget_x, 
 
 }
 
-String get_Robot_menu_Y_indicator_str(int index){
 
-    switch (index){
-        case ROBOT_MENU_LAND:
-            return "     LAND";
-        case ROBOT_MENU_TOOGLE_ARM:
-            if (robot_state == ROBOT_ARMED){
-                return "  DISARM";
-            }
-            else{
-                return "     ARM";
-            }
-        case ROBOT_MENU_TAKEOFF:
-            return "    TAKEOFF";
+String get_menu_title(int X_index){
+    switch (X_index){
+        case ROBOT_MENU:
+            return "    Robot Menu";
+        case WIFI_MENU:
+            return "    WiFi Menu";
         default:
             return "";
     }
+}
 
-    // if (index == ROBOT_MENU_LAND){
-    //         return "     LAND";
-    // }
-    // else if (index == ROBOT_MENU_TOOGLE_ARM){
-    //     //if (isArmed){
-    //     if (robot_state == ROBOT_ARMED){
-    //         return "  DISARM";
-    //     }
-    //     else{
-    //         return "     ARM";
-    //     }
-    // }
-    // else if (index == ROBOT_MENU_TAKEOFF){
-    //         return "    TAKEOFF";
-    // }
-    // else{
-    //         return "";
-    // }
+String get_menu_str(int X_index, int Y_index){
+
+
+    switch (X_index){
+
+
+        case ROBOT_MENU:
+
+            switch (Y_index){
+                case ROBOT_MENU_LAND:
+                    return "     LAND";
+                case ROBOT_MENU_TOOGLE_ARM:
+                    if (robot_state == ROBOT_ARMED){
+                        return "  DISARM";
+                    }
+                    else{
+                        return "     ARM";
+                    }
+                case ROBOT_MENU_TAKEOFF:
+                    return "    TAKEOFF";
+                default:
+                    return "";
+            }
+            
+
+
+        case WIFI_MENU:
+
+            return String(WiFi.RSSI(Y_index))+ "dB " + WiFi.SSID(+Y_index); 
+
+        default: 
+            return "ERROR: get_menu_str()";
+
+    }
 }
 
 
-# define Robot_Menu_SELECTED_Extra_Space "  "
+
+
+
 
 void LCD_Menu(){
-    LCD_Top_1_line_text("    Robot Menu", 1, WHITE, 5, 5, 127, 20, 5);
+    int menu_rect_text_size = 2;
 
-    String robot_menu_text_buf = get_Robot_menu_Y_indicator_str(robot_menu_Y_selector+1);
 
-    LCD_Top_1_line_text(robot_menu_text_buf, 1, TFT_LIGHTGREY, 15, 30, 107, 20, 10);
 
-    robot_menu_text_buf = Robot_Menu_SELECTED_Extra_Space + get_Robot_menu_Y_indicator_str(robot_menu_Y_selector);
+    //LCD_Top_1_line_text("    Robot Menu", 1, WHITE, 5, 5, 127, 20, 5);
+    String robot_menu_text_buf = get_menu_title(menu_X_selector);
 
-    LCD_Top_1_line_text(robot_menu_text_buf, 1, WHITE, 5, 83, 127, 20, 7);
+    LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, WHITE, 0, 0, 135, 20, 5);
 
-    robot_menu_text_buf = get_Robot_menu_Y_indicator_str(robot_menu_Y_selector-1);
 
-    LCD_Top_1_line_text(robot_menu_text_buf, 1, TFT_LIGHTGREY, 15, 110, 107, 20, 10);
+    switch (menu_X_selector){
+        case ROBOT_MENU:
+            menu_rect_text_size = 2;
+            break;
+        case WIFI_MENU:
+            menu_rect_text_size = 1;
+            break;
+        default:
+            menu_rect_text_size = 1;
+    }
+
+
+
+    # define upper_menu_rect_x 2
+    # define upper_menu_rect_y 60
+    # define upper_menu_rect_w 131
+    # define upper_menu_rect_h 20
+    # define upper_menu_rect_r 10
+
+
+
+    if( (menu_X_selector == ROBOT_MENU && ((menu_Y_selector+1) <= Robot_menu_max_X)) ||
+        // (menu_X_selector == WIFI_MENU && ((menu_Y_selector+1) <= n_WiFi_Networks-1)) ){
+        (menu_X_selector == WIFI_MENU && (menu_Y_selector < 0)) ){
+
+
+        robot_menu_text_buf = get_menu_str(menu_X_selector, menu_Y_selector+1);
+
+        //LCD_Top_1_line_text(robot_menu_text_buf, 1, TFT_LIGHTGREY, 5, 50, 131, 20, 10);
+        LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, TFT_LIGHTGREY, upper_menu_rect_x, upper_menu_rect_y, upper_menu_rect_w, upper_menu_rect_h, upper_menu_rect_r);
+
+    }
+    else {
+
+        //LCD_Top_1_line_text(" ", 1, BLACK, 5, 50, 127, 20, 10);
+        LCD_Top_1_line_text(" ", menu_rect_text_size, BLACK, upper_menu_rect_x, upper_menu_rect_y, upper_menu_rect_w, upper_menu_rect_h, upper_menu_rect_r);
+
+    }
+
+
+    robot_menu_text_buf = get_menu_str(menu_X_selector, menu_Y_selector);
+
+    LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, WHITE, 0, 83, 135, 20, 7);
+
+    
+    # define lower_menu_rect_x 2
+    # define lower_menu_rect_y 105
+    # define lower_menu_rect_w 131
+    # define lower_menu_rect_h 20
+    # define lower_menu_rect_r 10
+
+
+    if( (menu_X_selector == ROBOT_MENU && ((menu_Y_selector-1) >= Robot_menu_min_X)) ||
+        // (menu_X_selector == WIFI_MENU && ((menu_Y_selector-1) >= 0)) ){
+        (menu_X_selector == WIFI_MENU && (menu_Y_selector > 1-n_WiFi_Networks)) ){
+
+
+        robot_menu_text_buf = get_menu_str(menu_X_selector, menu_Y_selector-1);
+
+        //LCD_Top_1_line_text(robot_menu_text_buf, 1, TFT_LIGHTGREY, 2, 110, 131, 20, 10);
+        LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, TFT_LIGHTGREY, lower_menu_rect_x, lower_menu_rect_y, lower_menu_rect_w, lower_menu_rect_h, lower_menu_rect_r);
+    
+    }
+    else {
+        //LCD_Top_1_line_text(" ", 1, BLACK, 5, 110, 131, 20, 10);
+        LCD_Top_1_line_text(" ", menu_rect_text_size, BLACK, lower_menu_rect_x, lower_menu_rect_y, lower_menu_rect_w, lower_menu_rect_h, lower_menu_rect_r);
+    
+    }
 
 }
 
@@ -142,14 +219,15 @@ void LCD_loop(){
 
 
     if (menu_active){
-            LCD_Menu();
+        LCD_Menu();
     }
 
 
     else if (robot_connected) {
         if (JoyC_Xinput){
                 
-            }
+        }
+
         else{ // if Xinput is disabled
             LCD_Western_Artificial_Horizon();
             LCD_CPU_Widget(33, 122, Robot_BackgroundTask_CPU_load, Robot_RealTcode_CPU_load);
@@ -1418,3 +1496,6 @@ void LCD_Western_Artificial_Horizon(){
 
 
 }
+
+
+// --- LCD.cpp ---

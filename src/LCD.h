@@ -6,6 +6,8 @@
 #include "variables.h"
 #include "COMS.h"
 
+#include "Wireless.h"
+
 #define LCDV_MID 60
 
 

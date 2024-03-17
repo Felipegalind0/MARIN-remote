@@ -1,3 +1,4 @@
+// --- wireless.cpp ---
 #include "wireless.h" 
 
 #define msg_str_len 64
@@ -610,6 +611,11 @@ void get_ssids(){
    
   }
 
-
+  menu_active = true;
+  JoyC_Xinput = true;
+  menu_X_selector = WIFI_MENU;
+  LCD_flush();
 
 }
+
+// --- wireless.cpp ---

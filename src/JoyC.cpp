@@ -520,7 +520,7 @@ void JoyC_loop(){
            
         } // if the Init WiFi Warning is active and the user moves the joystick, toggle the selector
 
-        //Serial.println("menu_active: " + String(menu_active) + " JoyC_needs_to_return_to_center: " + String(JoyC_needs_to_return_to_center) + " JoyC_X_left_right: " + String(JoyC_X_left_right) + " JoyC_Y_up_down: " + String(JoyC_Y_up_down) + " robot_menu_X_selector: " + String(robot_menu_X_selector) + " robot_menu_Y_selector: " + String(robot_menu_Y_selector) + " robot_state: " + String(robot_state) + " robot_msg: " + robot_msg);
+        //Serial.println("menu_active: " + String(menu_active) + " JoyC_needs_to_return_to_center: " + String(JoyC_needs_to_return_to_center) + " JoyC_X_left_right: " + String(JoyC_X_left_right) + " JoyC_Y_up_down: " + String(JoyC_Y_up_down) + " menu_X_selector: " + String(menu_X_selector) + " menu_Y_selector: " + String(menu_Y_selector) + " robot_state: " + String(robot_state) + " robot_msg: " + robot_msg);
 
         else if(menu_active && !JoyC_needs_to_return_to_center){
             
@@ -528,36 +528,64 @@ void JoyC_loop(){
                 JoyC_Y_up_down = JoyC_selector_CENTER;
                 JoyC_needs_to_return_to_center = true;
             //if (JoyC_up){
-                if (robot_menu_Y_selector < Robot_menu_max_Y){
-                    robot_menu_Y_selector++;
+                if (menu_Y_selector < Robot_menu_max_Y && menu_X_selector == ROBOT_MENU ||
+                    // menu_Y_selector < n_WiFi_Networks-1 && menu_X_selector == WIFI_MENU){
+                    menu_Y_selector < 0 && menu_X_selector == WIFI_MENU){
+                    menu_Y_selector++;
 
                 }
                 else {
-                    Serial.println("JoyC_up, but robot_menu_Y_selector is already at max");
+                    Serial.println("JoyC_up, but menu_Y_selector is already at max");
                 }
             }
             else if (JoyC_Y_up_down == JoyC_selector_DOWN){
                 JoyC_Y_up_down = JoyC_selector_CENTER;
                 JoyC_needs_to_return_to_center = true;
-                if (robot_menu_Y_selector > Robot_menu_min_Y){
-                    robot_menu_Y_selector--;
+                if (menu_Y_selector > Robot_menu_min_Y && menu_X_selector == ROBOT_MENU ||
+                    // menu_Y_selector > 0 && menu_X_selector == WIFI_MENU){
+                    menu_Y_selector > 1-n_WiFi_Networks && menu_X_selector == WIFI_MENU){
+                    menu_Y_selector--;
                 }
                 else {
-                    Serial.println("JoyC_down, but robot_menu_Y_selector is already at min");
+                    Serial.println("JoyC_down, but menu_Y_selector is already at min");
                 }
             }
             else if (JoyC_X_left_right == JoyC_selector_LEFT){
                 JoyC_X_left_right = JoyC_selector_CENTER;
                 JoyC_needs_to_return_to_center = true;
-                if (robot_menu_X_selector > Robot_menu_min_X){
-                    robot_menu_X_selector--;
+                if (menu_X_selector > Robot_menu_min_X){
+                    menu_X_selector--;
+                    
+                    // make sure the Y selector is within the bounds of the menu
+                    if (menu_X_selector == ROBOT_MENU){
+                        if (menu_Y_selector > Robot_menu_max_Y){
+                            menu_Y_selector = Robot_menu_max_Y;
+                        }
+                    }
+                    else if (menu_X_selector == WIFI_MENU){
+                        if (menu_Y_selector > n_WiFi_Networks){
+                            menu_Y_selector = n_WiFi_Networks;
+                        }
+                    }
                 }
             }
             else if (JoyC_X_left_right == JoyC_selector_RIGHT){
                 JoyC_X_left_right = JoyC_selector_CENTER;
                 JoyC_needs_to_return_to_center = true;
-                if (robot_menu_X_selector < Robot_menu_max_X){
-                    robot_menu_X_selector++;
+                if (menu_X_selector < Robot_menu_max_X){
+                    menu_X_selector++;
+
+                    // make sure the Y selector is within the bounds of the menu
+                    if (menu_X_selector == ROBOT_MENU){
+                        if (menu_Y_selector > Robot_menu_max_Y){
+                            menu_Y_selector = Robot_menu_max_Y;
+                        }
+                    }
+                    else if (menu_X_selector == WIFI_MENU){
+                        if (menu_Y_selector > n_WiFi_Networks){
+                            menu_Y_selector = n_WiFi_Networks;
+                        }
+                    }
                 }
             }
         }

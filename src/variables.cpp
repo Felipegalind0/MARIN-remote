@@ -50,9 +50,9 @@ byte robot_state = UNKNOWN_ARMED_STATUS;
 // boolean robot_ARM_requested = false;
 // boolean robot_DISARM_requested = false;
 
-int robot_menu_X_selector = 0;
+int menu_X_selector = 0;
 
-int robot_menu_Y_selector = 0;
+int menu_Y_selector = 0;
 
 
 String robot_msg = "";
