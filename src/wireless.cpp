@@ -522,8 +522,17 @@ void convertMacAddress(const String &macStr, uint8_t *macAddr) {
 // returns dict(map) of SSIDs with ssid, MAC, and RSSI
 void get_ssids(){
 
+  setPairingState(SCANNING_SSIDS);
+
+
+  Serial.println("@get_ssids(core#= " + String(xPortGetCoreID()) + ")");
+
+
+
   robot_wifi_in_range = false;
   
+  yield();
+
   n_WiFi_Networks = WiFi.scanNetworks(); // Get the number of networks found
 
   Serial.println("\n-------------------------------------------------");
@@ -532,6 +541,8 @@ void get_ssids(){
 
 
   for (int i = 0; i < n_WiFi_Networks; i++) { // Loop through each network
+
+    yield();
 
     
 
@@ -578,8 +589,15 @@ void get_ssids(){
   }
 
   Serial.println("-------------------------------------------------\n");
+  yield();
+
+  if (WiFi_With_Remote_Name_Found) {
+    Serial.println("ERROR: WiFi With same name as remote name found, please change the remote name in creds.h\n");
+  }
 
   if (robot_wifi_in_range) {
+
+    
     Serial.println("SUCCESS: Robot WiFi found :D Robot_ssid: " + Robot_ssid + " Robot_MAC: " + Robot_MAC + "\n");
     // Convert Robot_MAC String to byte array
     convertMacAddress(Robot_MAC, broadcastAddress);
@@ -594,27 +612,40 @@ void get_ssids(){
     // Add peer
     if (esp_now_add_peer(&peerInfo) != ESP_OK){
       Serial.println("Failed to add peer");
+      // Pairing_State = PAIRING_FAILED;
+      setPairingState(PAIRING_FAILED);
+      
       return;
     }
 
     Serial.println("Peer added");
 
+    // is_paired = true;
+
     robot_connected = true;
+    JoyC_Xinput = false; // switch Joystick to  Xinput off so the user sees Artifical Horizon on Robot uppon pairing
 
-  }
+    // Pairing_State = PAIRING_SUCCESSFUL;
+    setPairingState(PAIRING_SUCCESSFUL);
+    update_status("Robot WiFi found :D", BLUE);
 
-
-  if (WiFi_With_Remote_Name_Found) {
-    Serial.println("ERROR: WiFi With same name as remote name found, please change the remote name in creds.h\n");
   }
   else {
-   
+    Serial.println("ERROR: Robot WiFi not found :(");
+    update_status("No Robot WiFi :(", RED);
+    // is_paired = false;
+    // pairFailed = true;
+    // Pairing_State = PAIRING_FAILED;
+    setPairingState(PAIRING_FAILED);
   }
 
-  menu_active = true;
-  JoyC_Xinput = true;
-  menu_X_selector = WIFI_MENU;
-  LCD_flush();
+
+
+  // yield();
+  // menu_active = true;
+  // JoyC_Xinput = true;
+  // menu_X_selector = WIFI_MENU;
+  // LCD_flush();
 
 }
 

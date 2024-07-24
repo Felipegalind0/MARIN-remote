@@ -96,7 +96,7 @@ String get_menu_str(int X_index, int Y_index){
 
         case WIFI_MENU:
 
-            return String(WiFi.RSSI(Y_index))+ "dB " + WiFi.SSID(+Y_index); 
+            return String(WiFi.RSSI(-Y_index))+ "dB " + WiFi.SSID(-Y_index); 
 
         default: 
             return "ERROR: get_menu_str()";
@@ -193,6 +193,7 @@ void LCD_Menu(){
 
 
 void LCD_loop(){
+    
 
     if (print_LCD_Loop){
         Serial.println("LCD_Print_JoyC_widget()");
@@ -224,14 +225,23 @@ void LCD_loop(){
 
 
     else if (robot_connected) {
+
+
         if (JoyC_Xinput){
                 
         }
 
         else{ // if Xinput is disabled
-            LCD_Western_Artificial_Horizon();
-            LCD_CPU_Widget(33, 122, Robot_BackgroundTask_CPU_load, Robot_RealTcode_CPU_load);
-            LCD_DispBatVolt(0, 122, Robot_perCentBatt, isCharging);
+
+            if (initMSG_has_been_flushed){ //make sure screen has been flushed before displaying the Artificial Horizon
+                LCD_Western_Artificial_Horizon();
+                LCD_CPU_Widget(33, 122, Robot_BackgroundTask_CPU_load, Robot_RealTcode_CPU_load);
+                LCD_DispBatVolt(0, 122, Robot_perCentBatt, isCharging);
+            }
+            else{
+                LCD_flush();
+                initMSG_has_been_flushed = true;
+            }   
         }
 
         
@@ -246,12 +256,12 @@ void LCD_loop(){
 
 
 
-    if ((counter % 100) == 0) {
+    if ((counter % 269) == 0) {
     //if (true) {
         if (print_updating_battery_voltage){
             Serial.print("Updating Battery Voltage: ");
         }
-        LCD_flush();
+        //LCD_flush();
         
         updateBatVolt();
 
@@ -262,10 +272,10 @@ void LCD_loop(){
 
         
     }
-    if ((counter % 100) == 1) {
+//    else if ((counter % 169) == 0) {
 
-        LCD_flush();
-    }
+//         LCD_flush();
+//     }
 
 
 
@@ -282,6 +292,19 @@ void LCD_loop(){
     else if (WiFi_State == WIFI_INITIALIZING) {
         LCD_WiFi_Initializing_Message();
         Warn_User_WiFi_Will_Be_Init = false;
+    }
+    else if (Pairing_State == SCANNING_SSIDS){
+        LCD_WiFi_Scanning_Message();
+    }
+    else if (WiFi_State == WIFI_CONNECTED){
+        
+    }
+    else if (WiFi_State == WIFI_DISCONNECTED){
+        
+    }
+    else if (WiFi_State == WIFI_NOT_INITIALIZED){
+        
+        
     }
 
 
@@ -538,18 +561,63 @@ void LCD_IMU_Message(void){
     canvas.print("Robot Flat");
 }
 
+#include "utility/qrcode.h"
+void print_qr_code(const char *string, uint16_t x, uint16_t y, uint8_t width, uint8_t version){
+     
+  // Create the QR code
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, 0, string);
+  
+  // Top quiet zone
+  uint8_t thickness = width / qrcode.size;
+  uint16_t lineLength = qrcode.size * thickness;
+  uint8_t xOffset = x + (width-lineLength)/2;
+  uint8_t yOffset = y + (width-lineLength)/2;
+  canvas.fillRect(x, y, width, width, TFT_WHITE);
+
+  for (uint8_t y = 0; y < qrcode.size; y++) {
+    for (uint8_t x = 0; x < qrcode.size; x++) {
+      uint8_t q = qrcode_getModule(&qrcode, x, y);
+      if (q) canvas.fillRect(x * thickness + xOffset, y * thickness + yOffset, thickness, thickness, TFT_BLACK);
+    }
+  }
+}
+
 void LCD_Felg_Message(void){
-    canvas.setTextFont(2);
+    canvas.setTextFont(1);
     canvas.setTextSize(1);
 
     canvas.setCursor(LCD_FELG_SM_X+5, LCD_FELG_SM_Y);
     canvas.print("Designed By");
 
-    canvas.setCursor(LCD_FELG_SM_X, LCD_FELG_SM_Y + 15);
+    canvas.setCursor(LCD_FELG_SM_X, LCD_FELG_SM_Y + 9);
     canvas.print("Felipe Galindo");
 
-    canvas.setCursor(LCD_FELG_SM_X+3, LCD_FELG_SM_Y + 30);
+    canvas.setCursor(LCD_FELG_SM_X+3, LCD_FELG_SM_Y + 18);
     canvas.print("in Minnesota");
+
+    //print QR code
+
+    print_qr_code("z.umn.edu/MARIN_remote", 17, 65, 100, 6);
+    
+
+    //bad, uses M5.Lcd, which is not the canvas
+    //M5.Lcd.qrcode("www.github.com/felipegalindo", 50, 50, 50, 6);
+
+
+    //draw white round rect and then print link
+    canvas.fillRoundRect(0, 160, 135, 10, 3, TFT_WHITE);
+    // canvas.fillRoundRect(0, 0, 135, 240, 10, TFT_WHITE);
+    canvas.setCursor(2, 160);
+    canvas.setTextFont(1);
+    canvas.setTextSize(1);
+    canvas.setTextColor(TFT_BLACK);
+    canvas.print("z.umn.edu/MARIN_remote");
+
+
+    // push the sprite to the screen
+    canvas.pushSprite(0, 0);
 }
 
 void LCD_calib1_Message(void){
@@ -623,16 +691,18 @@ void LCD_UI_Setup(){
     canvas.setTextSize(1);
     canvas.setTextColor(WHITE);
 
-    canvas.setCursor(SM_X, SM_Y);
-    canvas.print("Starting Systems");
+    // canvas.setCursor(SM_X, SM_Y);
+    // canvas.print("Starting Systems");
 
-    LCD_CORE_Message();
+    //LCD_CORE_Message();
 
-    LCD_IMU_Message();
 
     LCD_Felg_Message();
 
-    LCD_flush();
+    //LCD_flush();
+
+    // wait for 2 seconds
+    //delay(2000);
 }
 
 
@@ -773,7 +843,48 @@ void LCD_Resume_from_Abort_Message(){
     LCD_IMU_Message();
 }
 
+void LCD_WiFi_Scanning_Message(){
+    canvas.setTextFont(2);
+    canvas.setTextSize(1);
+    canvas.setTextColor(BLACK);
 
+    const int WARN_WiFi_INIT_M_X = 5;
+    const int WARN_WiFi_INIT_M_Y = 5;
+    const int WARN_WiFi_INIT_M_W = 125;
+    const int WARN_WiFi_INIT_M_H = 55;
+    const int WARN_WiFi_INIT_M_R = 5;
+
+    const int WARN_WiFi_INIT_M_S_H = 20;
+    const int WARN_WiFi_INIT_M_S_W = 60;
+
+    const int WARN_WiFi_INIT_M_S = WARN_WiFi_INIT_M_X+5 + (Warn_User_WiFi_Will_Be_Init_Selector_Abort * (WARN_WiFi_INIT_M_S_W-5));
+
+
+    canvas.fillRoundRect(WARN_WiFi_INIT_M_X, WARN_WiFi_INIT_M_Y,
+        WARN_WiFi_INIT_M_W, WARN_WiFi_INIT_M_H, WARN_WiFi_INIT_M_R, WHITE);
+
+    canvas.setCursor(WARN_WiFi_INIT_M_X+5, WARN_WiFi_INIT_M_Y);
+    canvas.print("Scanning");
+
+    canvas.setCursor(WARN_WiFi_INIT_M_X+5, WARN_WiFi_INIT_M_Y + 15);
+    canvas.print("WiFi");
+    //canvas.print(" " + String(10-(Warn_User_WiFi_Will_Be_Init/10)) + "s");
+    
+
+
+    // canvas.fillRoundRect(WARN_WiFi_INIT_M_S, WARN_WiFi_INIT_M_Y+30,
+    //     WARN_WiFi_INIT_M_S_W, WARN_WiFi_INIT_M_S_H, WARN_WiFi_INIT_M_R, TFT_LIGHTGREY);
+
+
+    // canvas.setCursor(WARN_WiFi_INIT_M_X+10, WARN_WiFi_INIT_M_Y+32);
+    // canvas.print("Start      Abort");
+
+
+
+    // canvas.setTextColor(WHITE);
+
+    //canvas.fillTriangle
+}
 
 void LCD_WiFi_Initializing_Message(){
     canvas.setTextFont(2);
@@ -938,8 +1049,8 @@ void LCD_Status_Message(){
     const int STATUS_M_H = 10;
     const int STATUS_M_R = 5;
 
-    const int STATUS_M_COLOR = WHITE;
-    int STATUS_M_TEXT_COLOR = invertColor16(STATUS_M_COLOR);
+    //int STATUS_M_COLOR = WHITE;
+    int STATUS_M_TEXT_COLOR = invertColor16(exec_status_color);
     //int STATUS_M_TEXT_COLOR = BLACK;
 
 
@@ -948,7 +1059,7 @@ void LCD_Status_Message(){
     
 
     canvas.fillRoundRect(STATUS_M_X, STATUS_M_Y,
-     STATUS_M_W, STATUS_M_H, STATUS_M_R, STATUS_M_COLOR);
+     STATUS_M_W, STATUS_M_H, STATUS_M_R, exec_status_color);
     
     canvas.setTextColor(STATUS_M_TEXT_COLOR);
     

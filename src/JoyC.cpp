@@ -203,7 +203,7 @@ uint8_t UNIT_JOYC::getFirmwareVersion(void) {
 UNIT_JOYC joyc;
 
 void JoyC_setup(){
-    Serial.print("@JoyC_setup");
+    Serial.println("@JoyC_setup");
     joyc.begin();
 }
 
@@ -529,9 +529,11 @@ void JoyC_loop(){
                 JoyC_needs_to_return_to_center = true;
             //if (JoyC_up){
                 if (menu_Y_selector < Robot_menu_max_Y && menu_X_selector == ROBOT_MENU ||
-                    // menu_Y_selector < n_WiFi_Networks-1 && menu_X_selector == WIFI_MENU){
+                    //menu_Y_selector < n_WiFi_Networks-1 && menu_X_selector == WIFI_MENU){
                     menu_Y_selector < 0 && menu_X_selector == WIFI_MENU){
                     menu_Y_selector++;
+
+                    Serial.println("menu_Y_selector: " + String(menu_Y_selector));
 
                 }
                 else {
@@ -542,9 +544,11 @@ void JoyC_loop(){
                 JoyC_Y_up_down = JoyC_selector_CENTER;
                 JoyC_needs_to_return_to_center = true;
                 if (menu_Y_selector > Robot_menu_min_Y && menu_X_selector == ROBOT_MENU ||
-                    // menu_Y_selector > 0 && menu_X_selector == WIFI_MENU){
+                    //menu_Y_selector > 0                && menu_X_selector == WIFI_MENU  ){ // we want negative for proper layout
                     menu_Y_selector > 1-n_WiFi_Networks && menu_X_selector == WIFI_MENU){
                     menu_Y_selector--;
+
+                    Serial.println("menu_Y_selector: " + String(menu_Y_selector));
                 }
                 else {
                     Serial.println("JoyC_down, but menu_Y_selector is already at min");

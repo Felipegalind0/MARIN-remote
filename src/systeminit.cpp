@@ -44,13 +44,13 @@ void SysInit_Setup(void){
 
     JoyC_setup();
 
-    Serial.print("CPU Cores: ");
+    Serial.println("CPU Cores: ");
 
     Serial.print("Core");
     Serial.print(BackgroundCore);
     Serial.print(": BackgroundCore");
 
-    Serial.print("Core");
+    Serial.print("\nCore");
     Serial.print(RealTcore);
     Serial.print(": RealTcore");
 

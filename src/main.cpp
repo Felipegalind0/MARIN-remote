@@ -135,11 +135,7 @@ SemaphoreHandle_t syncSemaphore;
 
 
 
-void update_status(String status) {
-  exec_status = status;
-  exec_status_has_changed = true;
-  Serial.println("\n@update_status: " + status);
-}
+
 
 void dim_screen() {
   M5.Axp.ScreenBreath(lcd_brightness-4);
@@ -153,7 +149,7 @@ void enter_sleep() {
 
   Serial.println("@enter_sleep: ");
 
-  update_status("Sleeping");
+  update_status("Sleeping", WHITE);
 
   dim_screen();
 
@@ -169,7 +165,7 @@ void enter_sleep() {
 
 void exit_sleep() {
   is_sleeping = false;
-  update_status("ON");
+  update_status("ON", GREEN);
   Serial.println("@exit_sleep: ON");
 
   un_dim_screen();
@@ -282,9 +278,11 @@ void exec_RealTcode() {
 
     
 
-
-    if (!(is_paired && WiFi_State == WIFI_INITIALIZED)){ //&& WiFi_Is_Initialized) {
-      pairRequested = true;
+    if ((WiFi_State == WIFI_INITIALIZED) && Pairing_State == PAIRING_NOT_REQUESTED){ //&& WiFi_Is_Initialized) {
+    //if (!(is_paired && WiFi_State == WIFI_INITIALIZED) && !pairFailed){ //&& WiFi_Is_Initialized) {
+      // pairRequested = true;
+      // Pairing_State = PAIRING_REQUESTED;
+      setPairingState(PAIRING_REQUESTED);
     }
 
     M5.update();
@@ -558,7 +556,7 @@ void RealTcode( void * pvParameters ){
 
 
 void exec_BackgroundTask() {
-  if ((xSemaphoreTake(syncSemaphore, portMAX_DELAY) == pdTRUE) && (is_booted)) {
+  if ((xSemaphoreTake(syncSemaphore, portMAX_DELAY) == pdTRUE) && (is_booted)) { // check that syncSemaphore is avaliable and the device is booted
     //Serial.print("@BackgroundTask: ");
 
 
@@ -600,29 +598,21 @@ void exec_BackgroundTask() {
       return;
     }
 
-    if (WiFi_State == WIFI_JUST_INITIALIZED) { //WiFi_Just_Finished_Initializing) {
-      Serial.println("\nWireless_Setup() DONE \n");
-      LCD_flush();
-      return;
-    }
 
+    if ((Pairing_State == PAIRING_REQUESTED) && WiFi_State == WIFI_INITIALIZED){
+    //if (pairRequested && WiFi_State == WIFI_INITIALIZED){  //WiFi_Is_Initialized) {
 
-
-
-    if (pairRequested && WiFi_State == WIFI_INITIALIZED){  //WiFi_Is_Initialized) {
-
-      Serial.println("@RealTcode: is_paired = false; Starting pairing process");
+      Serial.println("Pairing_State = PAIRING_REQUESTED\nWiFi_State = WIFI_INITIALIZED");
       // Check for pairing
-      update_status("Scanning WiFi");
+      update_status("Scan WiFi", BLUE);
 
       get_ssids();
 
       //print_WiFi_Networks();
 
-      Serial.println("@RealTcode: Pairing process complete; is_paired = true");
-      update_status("Pairing DONE");
-      is_paired = true;
-      pairRequested = false;
+      // Serial.print("Pairing process complete; is_paired = ");
+      // Serial.println((is_paired ? "true" : "false"));
+      // pairRequested = false;
       return;
     }
 

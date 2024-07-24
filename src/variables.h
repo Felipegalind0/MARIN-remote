@@ -6,6 +6,7 @@
 
 
 #include <M5StickCPlus.h>
+#include <Preferences.h>
 //#include <Vector.h>
 
 
@@ -41,7 +42,12 @@ enum Robot_Menu_Y_Options {
 };
 
 enum Wifi_States {
-  WIFI_NOT_INITIALIZED, WIFI_INITIALIZING, WIFI_JUST_INITIALIZED, WIFI_INITIALIZED, WIFI_CONNECTED, WIFI_DISCONNECTED, WIFI_DEACTIVATED
+  WIFI_NOT_INITIALIZED, WIFI_INITIALIZING, WIFI_INITIALIZED, WIFI_CONNECTED, WIFI_DISCONNECTED, WIFI_DEACTIVATED
+};
+
+enum Pairing_States {
+  PAIRING_NOT_REQUESTED, SCANNING_SSIDS,
+  PAIRING_REQUESTED, PAIRING_FAILED, PAIRING_SUCCESSFUL
 };
 
 extern uint8_t broadcastAddress[6]; // Array to store the MAC address
@@ -107,9 +113,12 @@ extern boolean Warn_User_WiFi_Will_Be_Init_Selector_Abort;
 
 extern byte WiFi_State;
 
+extern byte Pairing_State;
+
 
 // extern boolean WiFi_connected;
 extern String exec_status;
+extern int exec_status_color;
 extern boolean exec_status_has_changed;
 
 extern boolean robot_wifi_in_range;
@@ -204,7 +213,10 @@ extern byte Abtn;
 extern byte Bbtn;
 extern byte Pbtn;
 
-extern boolean pairRequested;
+extern boolean initMSG_has_been_flushed;
+
+// extern boolean pairRequested;
+// extern boolean pairFailed;
 
 
 
@@ -214,6 +226,12 @@ void setMode(bool inc);
 
 void resetVar();
 void resetPara();
+
+void setPairingState(byte state);
+
+void update_status(String status, int color);
+
+
 
 
 

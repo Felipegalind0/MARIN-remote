@@ -11,8 +11,8 @@
 #define LCDV_MID 60
 
 
-#define SM_X 30
-#define SM_Y 170
+// #define SM_X 30
+// #define SM_Y 120
 
 
 #define Middle_M_X 35
@@ -76,6 +76,8 @@ void LCD_Resume_from_Abort_Message();
 void LCD_IMU_Message();
 
 void LCD_Pairing_Message();
+
+void LCD_WiFi_Scanning_Message();
 
 void LCD_Warn_WiFi_Message();
 

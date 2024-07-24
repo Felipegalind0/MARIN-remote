@@ -2,6 +2,8 @@
 #include "LCD.h"
 #include <WebSerial.h>
 
+Preferences preferences;
+
 uint8_t broadcastAddress[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Array to store the MAC address
 
 
@@ -15,7 +17,7 @@ boolean standing        = false;
 // boolean hasFallen       = false;
 boolean abortWasHandled = false;
 
-boolean is_paired = false;
+// boolean is_paired = false;
 boolean is_booted = false;
 
 boolean WiFi_connected = false;
@@ -29,6 +31,8 @@ boolean robot_connected = false;
 
 
 byte WiFi_State = WIFI_NOT_INITIALIZED;
+
+byte Pairing_State = PAIRING_NOT_REQUESTED;
 
 //boolean Should_Init_WiFi = false;
 
@@ -94,6 +98,7 @@ boolean isCharging = false;
 
 
 String exec_status = "OFF";
+int exec_status_color = WHITE;
 boolean exec_status_has_changed = false;
 
 
@@ -140,7 +145,8 @@ byte Abtn = 0;
 byte Bbtn = 0;
 byte Pbtn = 0;
 
-boolean pairRequested = false;
+// boolean pairRequested = false;
+// boolean pairFailed = false;
 
 
 
@@ -208,6 +214,8 @@ int64_t BackgroundTask_execution_time_start = 0, BackgroundTask_execution_time_e
 double RealTcode_CPU_load = 0.0, BackgroundTask_CPU_load = 0.0;
 
 double Robot_RealTcode_CPU_load = 0.0, Robot_BackgroundTask_CPU_load = 0.0;
+
+boolean initMSG_has_been_flushed = false;
 
 
 void resetVar() {
@@ -334,4 +342,16 @@ void updateBatVolt(){
     //isCharging = M5.Axp.GetBatChargeCurrent() > 0;
 
 
+}
+
+void setPairingState(byte state) {
+    Pairing_State = state;
+    Serial.println("Pairing_State = " + String(Pairing_State));
+}
+
+void update_status(String status, int color) {
+  exec_status = status;
+  exec_status_color = color;
+  exec_status_has_changed = true;
+  Serial.println("\n@update_status: " + status);
 }
