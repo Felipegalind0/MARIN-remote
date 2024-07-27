@@ -1,5 +1,7 @@
 // --- wireless.cpp ---
 #include "wireless.h" 
+#include "speaker.h"
+#include "JoyC.h"
 
 #define msg_str_len 64
 // Structure example to receive data
@@ -349,9 +351,38 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
 }
 
 
+// Define RGB565 color values
+
 void Wireless_Setup(){
 //void Wireless_Setup( void * pvParameters ){
-  RED_LED(1);
+
+
+    RED_LED(1);
+
+    // set_JoyC_LED_color(LIGHT_BLUE); // SETINGUP
+    // delay(1000);
+
+    // set_JoyC_LED_color(SKY_BLUE); // SETUP DONE
+    // delay(1000);
+
+    // set_JoyC_LED_color(DODGER_BLUE); 
+    // delay(1000);
+
+    // set_JoyC_LED_color(MEDIUM_BLUE);
+    // delay(1000);
+
+    // set_JoyC_LED_color(TFT_BLUE);  
+    // delay(1000);
+
+    // set_JoyC_LED_color(DEEP_SKY_BLUE); // CONNECTED 
+    // delay(1000);
+
+
+
+
+
+
+    set_JoyC_LED_color(LIGHT_BLUE);
 
     //print the MAC address of the device
     Serial.print("MAC Address: ");
@@ -369,6 +400,7 @@ void Wireless_Setup(){
 
       //WiFi_connected = true;
       WiFi_State = WIFI_CONNECTED;
+      set_JoyC_LED_color(SKY_BLUE);
   
       Serial.print("Connected to WiFi '");
       Serial.print(ssid);
@@ -426,6 +458,7 @@ void Wireless_Setup(){
     //WiFi_Is_Initialized = true;
     //WiFi_Is_Initializing = false;
     WiFi_State = WIFI_INITIALIZED;
+    set_JoyC_LED_color(SKY_BLUE);
 
     RED_LED(0);
 
@@ -519,8 +552,84 @@ void convertMacAddress(const String &macStr, uint8_t *macAddr) {
 }
 
 
+
+
+void connectRobot(){
+  Serial.println("SUCCESS: Robot WiFi found :D Robot_ssid: " + Robot_ssid + " Robot_MAC: " + Robot_MAC + "\n");
+  // Convert Robot_MAC String to byte array
+  convertMacAddress(Robot_MAC, broadcastAddress);
+
+  
+  // Setup ESPNOW peer
+  esp_now_peer_info_t peerInfo;
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false;
+
+  // Add peer
+  if (esp_now_add_peer(&peerInfo) != ESP_OK){
+    Serial.println("Failed to add peer");
+    // Pairing_State = PAIRING_FAILED;
+    setPairingState(PAIRING_FAILED);
+    
+    return;
+  }
+
+  Serial.println("Peer added");
+
+  // is_paired = true;
+
+  robot_connected = true;
+  JoyC_Xinput = false; // switch Joystick to  Xinput off so the user sees Artifical Horizon on Robot uppon pairing
+
+  // Pairing_State = PAIRING_SUCCESSFUL;
+  setPairingState(PAIRING_SUCCESSFUL);
+  update_status("Robot WiFi found :D", BLUE);
+}
+
+
+byte robots_found = 0;
+String found_robot_ssid = "-";
+String found_robot_mac = "-";
+int found_robot_num = -1;
+int found_robot_ssid_num = -1;
+
+void checkAutoBind(){
+  if (robots_found == 1 && found_robot_num == Remote_Num) { 
+
+    if (Robot_MAC == "-") {
+      Robot_MAC = found_robot_mac;
+      Serial.println("\nRobot_MAC: " + Robot_MAC);
+    }
+
+    if (Robot_ssid == "-") {
+      Robot_ssid = found_robot_ssid;
+      Serial.println("Robot_ssid: " + Robot_ssid + "\n");
+    }
+
+  }
+}
+
 // returns dict(map) of SSIDs with ssid, MAC, and RSSI
 void get_ssids(){
+
+
+  robots_found = 0;
+  found_robot_mac = "-";
+  found_robot_ssid = "-";
+  found_robot_num = -1;
+  found_robot_ssid_num = -1;
+
+  xTaskCreatePinnedToCore(
+    Wireless_Sound, /* Task function. */
+    "Click_Sound", /* Name of the task */
+    10000,      /* Stack size in words */
+    NULL,       /* Task input parameter */
+    -2,          /* Priority of the task */
+    NULL,       /* Task handle. */
+    BackgroundCore);  /* Core where the task should run */
+
+
 
   setPairingState(SCANNING_SSIDS);
 
@@ -538,6 +647,8 @@ void get_ssids(){
   Serial.println("\n-------------------------------------------------");
 
   Serial.println("Found " + String(n_WiFi_Networks) + " networks\n");
+
+
 
 
   for (int i = 0; i < n_WiFi_Networks; i++) { // Loop through each network
@@ -567,15 +678,39 @@ void get_ssids(){
 
       WiFi_With_Remote_Name_Found = true;
     }
+
+
     // if WiFi.SSID contains starts with 'MARIN' and ends with '-robot'
     else if (WiFi.SSID(i).startsWith("MARIN") && WiFi.SSID(i).endsWith("-robot")) {
-      if (Robot_MAC == "-") {
-        Robot_MAC = WiFi.BSSIDstr(i);
+
+      robots_found++;
+
+      
+      int robot_num = WiFi.SSID(i).substring(5, WiFi.SSID(i).length() - 6).toInt();
+      
+      if (found_robot_num == -1 || Remote_Num == robot_num) {
+        robot_wifi_in_range = true;
+          // extract the robot number from the SSID
+        found_robot_num = robot_num;
+        found_robot_ssid_num = i;
+        
+
+        if (found_robot_ssid == "-") {
+          found_robot_ssid = WiFi.SSID(i);
+          Serial.println("found_robot_ssid: " + found_robot_ssid);
+        }
+
+        if (found_robot_mac == "-") {
+          found_robot_mac = WiFi.BSSIDstr(i);
+          Serial.println("found_robot_MAC: " + found_robot_mac + "\n");
+        }
+
       }
-      if (Robot_ssid == "-") {
-        Robot_ssid = WiFi.SSID(i);
-      }
-      robot_wifi_in_range = true;
+
+      
+
+
+      
       Serial.print("\n(Robot WiFi) ");
       //Serial.println(WiFi.SSID(i) + " " + WiFi.BSSIDstr(i) + " " + String(WiFi.RSSI(i))+ "\n");
       Serial.println(String(WiFi.RSSI(i)) + " " + WiFi.BSSIDstr(i) + " " + WiFi.SSID(i) + "\n");
@@ -593,51 +728,68 @@ void get_ssids(){
 
   if (WiFi_With_Remote_Name_Found) {
     Serial.println("ERROR: WiFi With same name as remote name found, please change the remote name in creds.h\n");
+    setPairingState(DUPLICATE_REMOTE_FOUND);
   }
+  else{
+    checkAutoBind();
 
-  if (robot_wifi_in_range) {
+    if (robot_wifi_in_range && Robot_MAC != "-" && Robot_ssid != "-") {
 
+      set_JoyC_LED_color(DEEP_SKY_BLUE);
+
+      connectRobot();  
     
-    Serial.println("SUCCESS: Robot WiFi found :D Robot_ssid: " + Robot_ssid + " Robot_MAC: " + Robot_MAC + "\n");
-    // Convert Robot_MAC String to byte array
-    convertMacAddress(Robot_MAC, broadcastAddress);
-
-    
-    // Setup ESPNOW peer
-    esp_now_peer_info_t peerInfo;
-    memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-    peerInfo.channel = 0;
-    peerInfo.encrypt = false;
-
-    // Add peer
-    if (esp_now_add_peer(&peerInfo) != ESP_OK){
-      Serial.println("Failed to add peer");
-      // Pairing_State = PAIRING_FAILED;
-      setPairingState(PAIRING_FAILED);
-      
-      return;
     }
 
-    Serial.println("Peer added");
+    else {
 
-    // is_paired = true;
+      if (!robots_found){
+        Serial.println("ERROR: " + String(Robot_ssid) + " not found :(");
+        update_status("No Robot WiFi :(", RED);
+        setPairingState(NO_ROBOTS_FOUND);
+        menu_active = true;
+        JoyC_Xinput = true;
+        menu_X_selector = WIFI_NETWORKS;
+        menu_Y_selector = 0;
 
-    robot_connected = true;
-    JoyC_Xinput = false; // switch Joystick to  Xinput off so the user sees Artifical Horizon on Robot uppon pairing
 
-    // Pairing_State = PAIRING_SUCCESSFUL;
-    setPairingState(PAIRING_SUCCESSFUL);
-    update_status("Robot WiFi found :D", BLUE);
+        //LCD_flush(); //BAD, LCD used by other core too CRASHES ESP32 DO NOT ENABLE
+        // is_paired = false;
+        // pairFailed = true;
+        // Pairing_State = PAIRING_FAILED;
+        // setPairingState(PAIRING_FAILED);
+        
+
+
+      }
+      else if (robots_found > 1){
+        Serial.println("WARNING: Multiple Robots found!");
+        update_status("1<robots_found", RED);
+        // is_paired = false;
+        // pairFailed = true;
+        // Pairing_State = MULTIPLE_ROBOTS_FOUND;
+        setPairingState(MULTIPLE_ROBOTS_FOUND);
+        menu_active = true;
+        JoyC_Xinput = true;
+        menu_X_selector = WIFI_NETWORKS;
+        menu_Y_selector = -(found_robot_ssid_num);
+
+      }
+      else if (robots_found == 1){
+        Serial.println("WARNING: Robot Num Not Found");
+        update_status("bad pair num", RED);
+        setPairingState(ROBOT_NUM_NOT_FOUND);
+        menu_active = true;
+        JoyC_Xinput = true;
+        menu_X_selector = WIFI_NETWORKS;
+        menu_Y_selector = -(found_robot_ssid_num);
+      }
+
+      
+    }
 
   }
-  else {
-    Serial.println("ERROR: Robot WiFi not found :(");
-    update_status("No Robot WiFi :(", RED);
-    // is_paired = false;
-    // pairFailed = true;
-    // Pairing_State = PAIRING_FAILED;
-    setPairingState(PAIRING_FAILED);
-  }
+
 
 
 

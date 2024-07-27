@@ -4,6 +4,7 @@
 #include "Arduino.h"
 #include "JoyC.h"
 #include "variables.h"
+#include "speaker.h"
 
 #include <cmath> // Include the cmath library for sqrt and atan2 functions
 
@@ -207,6 +208,10 @@ void JoyC_setup(){
     joyc.begin();
 }
 
+void set_JoyC_LED_color(uint32_t color){
+    joyc.setLEDColor(0, color);
+}
+
 
 void print_JoyC_raw_values(){
     Serial.print("JoyC_X_raw: ");
@@ -256,6 +261,7 @@ void JoyC_loop(){
     JoyC_Y_raw = joyc.getADCValue(1);
 
     JoyC_btn = !joyc.getButtonStatus();
+
 
     cartesianToPolar(&JoyC_X, &JoyC_Y, &JoyC_r, &JoyC_Phi);
     //print_JoyC_raw_values();
@@ -530,14 +536,33 @@ void JoyC_loop(){
             //if (JoyC_up){
                 if (menu_Y_selector < Robot_menu_max_Y && menu_X_selector == ROBOT_MENU ||
                     //menu_Y_selector < n_WiFi_Networks-1 && menu_X_selector == WIFI_MENU){
-                    menu_Y_selector < 0 && menu_X_selector == WIFI_MENU){
+                    menu_Y_selector < 1 && menu_X_selector == WIFI_NETWORKS||
+                    menu_Y_selector < WIFI_SHOW_INFO && menu_X_selector == WIFI_MENU){
                     menu_Y_selector++;
 
                     Serial.println("menu_Y_selector: " + String(menu_Y_selector));
 
+                    xTaskCreatePinnedToCore(
+                    Click_Sound, /* Task function. */
+                    "Click_Sound", /* Name of the task */
+                    10000,      /* Stack size in words */
+                    NULL,       /* Task input parameter */
+                    -2,          /* Priority of the task */
+                    NULL,       /* Task handle. */
+                    BackgroundCore);  /* Core where the task should run */
+
                 }
                 else {
                     Serial.println("JoyC_up, but menu_Y_selector is already at max");
+
+                    xTaskCreatePinnedToCore(
+                    Click_DENIED_Sound, /* Task function. */
+                    "Click_DENIED_Sound", /* Name of the task */
+                    10000,      /* Stack size in words */
+                    NULL,       /* Task input parameter */
+                    -2,          /* Priority of the task */
+                    NULL,       /* Task handle. */
+                    BackgroundCore);  /* Core where the task should run */
                 }
             }
             else if (JoyC_Y_up_down == JoyC_selector_DOWN){
@@ -545,19 +570,45 @@ void JoyC_loop(){
                 JoyC_needs_to_return_to_center = true;
                 if (menu_Y_selector > Robot_menu_min_Y && menu_X_selector == ROBOT_MENU ||
                     //menu_Y_selector > 0                && menu_X_selector == WIFI_MENU  ){ // we want negative for proper layout
-                    menu_Y_selector > 1-n_WiFi_Networks && menu_X_selector == WIFI_MENU){
+                    menu_Y_selector > 1-n_WiFi_Networks && menu_X_selector == WIFI_NETWORKS||
+                    menu_Y_selector > 0                && menu_X_selector == WIFI_MENU){
                     menu_Y_selector--;
 
                     Serial.println("menu_Y_selector: " + String(menu_Y_selector));
+
+                    xTaskCreatePinnedToCore(
+                    Click_Sound, /* Task function. */
+                    "Click_Sound", /* Name of the task */
+                    10000,      /* Stack size in words */
+                    NULL,       /* Task input parameter */
+                    -2,          /* Priority of the task */
+                    NULL,       /* Task handle. */
+                    BackgroundCore);  /* Core where the task should run */
+                    
                 }
                 else {
                     Serial.println("JoyC_down, but menu_Y_selector is already at min");
+
+                    xTaskCreatePinnedToCore(
+                    Click_DENIED_Sound, /* Task function. */
+                    "Click_DENIED_Sound", /* Name of the task */
+                    10000,      /* Stack size in words */
+                    NULL,       /* Task input parameter */
+                    -2,          /* Priority of the task */
+                    NULL,       /* Task handle. */
+                    BackgroundCore);  /* Core where the task should run */
                 }
             }
+
+
+
             else if (JoyC_X_left_right == JoyC_selector_LEFT){
                 JoyC_X_left_right = JoyC_selector_CENTER;
                 JoyC_needs_to_return_to_center = true;
-                if (menu_X_selector > Robot_menu_min_X){
+                if (menu_X_selector == WIFI_MENU){
+                    menu_X_selector = WIFI_NETWORKS;
+                }
+                else if (menu_X_selector > Robot_menu_min_X ){
                     menu_X_selector--;
                     
                     // make sure the Y selector is within the bounds of the menu
@@ -566,7 +617,7 @@ void JoyC_loop(){
                             menu_Y_selector = Robot_menu_max_Y;
                         }
                     }
-                    else if (menu_X_selector == WIFI_MENU){
+                    else if (menu_X_selector == WIFI_NETWORKS){
                         if (menu_Y_selector > n_WiFi_Networks){
                             menu_Y_selector = n_WiFi_Networks;
                         }
@@ -585,12 +636,15 @@ void JoyC_loop(){
                             menu_Y_selector = Robot_menu_max_Y;
                         }
                     }
-                    else if (menu_X_selector == WIFI_MENU){
+                    else if (menu_X_selector == WIFI_NETWORKS){
                         if (menu_Y_selector > n_WiFi_Networks){
                             menu_Y_selector = n_WiFi_Networks;
                         }
                     }
                 }
+            }
+            else {
+                Serial.println("L/R UP/DOWN MENU ERROR");
             }
         }
 

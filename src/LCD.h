@@ -28,7 +28,7 @@
 
 
 #define LCD_FELG_SM_X 40
-#define LCD_FELG_SM_Y 190
+#define LCD_FELG_SM_Y 180
 
 
 #define LCD_ANGLE_X 55

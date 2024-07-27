@@ -313,15 +313,20 @@ void exec_RealTcode() {
 
       if(menu_active){ // if the menu is active
 
+      #define WIFI_MENU_SCAN 1
+
+
         if (menu_X_selector == ROBOT_MENU){
 
           if(menu_Y_selector == ROBOT_MENU_TOOGLE_ARM){
             //robot_ARM_requested = true;
             if (robot_state == ROBOT_DISARMED){
               robot_state = ROBOT_ARMING;
+              set_JoyC_LED_color(TFT_GREEN);
             }
             else {
               robot_state = ROBOT_DISARMING;
+              set_JoyC_LED_color(DEEP_SKY_BLUE);
             }
             
             menu_active = false;
@@ -338,7 +343,30 @@ void exec_RealTcode() {
             LCD_flush();
           }
 
+        }
+        else if (menu_X_selector == WIFI_NETWORKS){
 
+          if(menu_Y_selector == WIFI_MENU_SCAN){
+            //robot_ARM_requested = true;
+            //robot_state = TAKEOFF_REQUESTED;
+            setPairingState(PAIRING_REQUESTED);
+            
+            menu_active = false;
+            JoyC_Xinput = false;
+            LCD_flush();
+          }
+          else if(-menu_Y_selector < n_WiFi_Networks){
+            menu_X_selector = WIFI_MENU;
+            menu_Y_selector = 0;
+          }
+
+
+        }
+
+        else{
+          menu_active = false;
+          JoyC_Xinput = false;
+          LCD_flush();
         }
 
       }

@@ -23,7 +23,20 @@ boolean print_RealT_Times = true;
 void LCD_Top_1_line_text(String text, byte text_size, int color, byte widget_x, byte widget_y, byte widget_w, byte widget_h, byte widget_r){
     canvas.setTextFont(text_size);
     canvas.setTextSize(1);
-    canvas.setTextColor(BLACK);
+
+    // text will be something like " -#dB SSID", split by the first space and compare with ssid to see if it is the same
+    String txt_ssid = text.substring(text.indexOf(" ")+1);
+    Serial.println("txt_ssid: " + txt_ssid + " ssid: " + ssid);
+    if (txt_ssid.equals(ssid)){
+        
+        canvas.setTextColor(BLUE);
+    }
+    else{
+        // canvas.setTextColor(color);
+        canvas.setTextColor(BLACK);
+    }
+
+
 
     // const int ROBOT_MENU_M_X = 5;
     // const int ROBOT_MENU_M_Y = 5;
@@ -44,7 +57,7 @@ void LCD_Top_1_line_text(String text, byte text_size, int color, byte widget_x, 
     canvas.fillRoundRect(widget_x, widget_y,
      widget_w, widget_h, widget_r, color);
 
-    canvas.setTextColor(invertColor16(color));
+    //canvas.setTextColor(invertColor16(color));
 
     canvas.setCursor(widget_x+5, widget_y+2);
 
@@ -60,9 +73,12 @@ void LCD_Top_1_line_text(String text, byte text_size, int color, byte widget_x, 
 String get_menu_title(int X_index){
     switch (X_index){
         case ROBOT_MENU:
-            return "    Robot Menu";
+            return "  < Robot Menu >";
+        case WIFI_NETWORKS:
+            return " < WiFi Networks ";
+
         case WIFI_MENU:
-            return "    WiFi Menu";
+            return " < WiFi Menu ";
         default:
             return "";
     }
@@ -94,12 +110,32 @@ String get_menu_str(int X_index, int Y_index){
             
 
 
-        case WIFI_MENU:
+        case WIFI_NETWORKS:
 
-            return String(WiFi.RSSI(-Y_index))+ "dB " + WiFi.SSID(-Y_index); 
+            if (Y_index < 1){
+                return String(WiFi.RSSI(-Y_index))+ "dB " + WiFi.SSID(-Y_index); 
+            }
+            else if (Y_index == 1){
+                return "        ReScan";
+            }
+
+
+        case WIFI_MENU:
+            switch (Y_index){
+                case WIFI_SHOW_INFO:
+                    return "      Info";
+                case WIFI_MENU_CONNECT_DISCONNECT:
+                    return "     Connect";
+                case WIFI_MENU_SCAN:
+                    return "      ReScan";
+
+
+                default:
+                    return "";
+            }
 
         default: 
-            return "ERROR: get_menu_str()";
+            return "get_menu_str(" + String(X_index) + ", " + String(Y_index) + ")";
 
     }
 }
@@ -117,14 +153,19 @@ void LCD_Menu(){
     //LCD_Top_1_line_text("    Robot Menu", 1, WHITE, 5, 5, 127, 20, 5);
     String robot_menu_text_buf = get_menu_title(menu_X_selector);
 
-    LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, WHITE, 0, 0, 135, 20, 5);
+    canvas.fillRoundRect(0, 45, 135, 82, 5, DARKGREY);
+
+    LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, WHITE, 2, 48, 131, 16, 3);
+    //LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, DARKGREY, 0, 30, 135, 100, 5);
+
+    
 
 
     switch (menu_X_selector){
         case ROBOT_MENU:
             menu_rect_text_size = 2;
             break;
-        case WIFI_MENU:
+        case WIFI_NETWORKS:
             menu_rect_text_size = 1;
             break;
         default:
@@ -134,7 +175,7 @@ void LCD_Menu(){
 
 
     # define upper_menu_rect_x 2
-    # define upper_menu_rect_y 60
+    # define upper_menu_rect_y 65
     # define upper_menu_rect_w 131
     # define upper_menu_rect_h 20
     # define upper_menu_rect_r 10
@@ -143,7 +184,8 @@ void LCD_Menu(){
 
     if( (menu_X_selector == ROBOT_MENU && ((menu_Y_selector+1) <= Robot_menu_max_X)) ||
         // (menu_X_selector == WIFI_MENU && ((menu_Y_selector+1) <= n_WiFi_Networks-1)) ){
-        (menu_X_selector == WIFI_MENU && (menu_Y_selector < 0)) ){
+        (menu_X_selector == WIFI_NETWORKS && (menu_Y_selector < 1)) ||
+        (menu_X_selector == WIFI_MENU && (menu_Y_selector < WIFI_SHOW_INFO)) ){
 
 
         robot_menu_text_buf = get_menu_str(menu_X_selector, menu_Y_selector+1);
@@ -155,14 +197,14 @@ void LCD_Menu(){
     else {
 
         //LCD_Top_1_line_text(" ", 1, BLACK, 5, 50, 127, 20, 10);
-        LCD_Top_1_line_text(" ", menu_rect_text_size, BLACK, upper_menu_rect_x, upper_menu_rect_y, upper_menu_rect_w, upper_menu_rect_h, upper_menu_rect_r);
+        LCD_Top_1_line_text(" ", menu_rect_text_size, DARKGREY, upper_menu_rect_x, upper_menu_rect_y, upper_menu_rect_w, upper_menu_rect_h, upper_menu_rect_r);
 
     }
 
 
     robot_menu_text_buf = get_menu_str(menu_X_selector, menu_Y_selector);
 
-    LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, WHITE, 0, 83, 135, 20, 7);
+    LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, WHITE, 2, 85, 131, 20, 7);
 
     
     # define lower_menu_rect_x 2
@@ -174,7 +216,8 @@ void LCD_Menu(){
 
     if( (menu_X_selector == ROBOT_MENU && ((menu_Y_selector-1) >= Robot_menu_min_X)) ||
         // (menu_X_selector == WIFI_MENU && ((menu_Y_selector-1) >= 0)) ){
-        (menu_X_selector == WIFI_MENU && (menu_Y_selector > 1-n_WiFi_Networks)) ){
+        (menu_X_selector == WIFI_NETWORKS && (menu_Y_selector > 1-n_WiFi_Networks)) ||
+        (menu_X_selector == WIFI_MENU && (menu_Y_selector > 0))     ){
 
 
         robot_menu_text_buf = get_menu_str(menu_X_selector, menu_Y_selector-1);
@@ -185,7 +228,7 @@ void LCD_Menu(){
     }
     else {
         //LCD_Top_1_line_text(" ", 1, BLACK, 5, 110, 131, 20, 10);
-        LCD_Top_1_line_text(" ", menu_rect_text_size, BLACK, lower_menu_rect_x, lower_menu_rect_y, lower_menu_rect_w, lower_menu_rect_h, lower_menu_rect_r);
+        LCD_Top_1_line_text(" ", menu_rect_text_size, DARKGREY, lower_menu_rect_x, lower_menu_rect_y, lower_menu_rect_w, lower_menu_rect_h, lower_menu_rect_r);
     
     }
 
@@ -220,7 +263,13 @@ void LCD_loop(){
 
 
     if (menu_active){
-        LCD_Menu();
+        if (initMSG_has_been_flushed){
+            LCD_Menu();
+        }
+        else{
+            LCD_flush();
+            initMSG_has_been_flushed = true;
+        }
     }
 
 
@@ -588,13 +637,16 @@ void LCD_Felg_Message(void){
     canvas.setTextFont(1);
     canvas.setTextSize(1);
 
-    canvas.setCursor(LCD_FELG_SM_X+5, LCD_FELG_SM_Y);
+    canvas.setCursor(LCD_FELG_SM_X, LCD_FELG_SM_Y-3);
+    canvas.print(Remote_Name);
+
+    canvas.setCursor(LCD_FELG_SM_X+5, LCD_FELG_SM_Y+9);
     canvas.print("Designed By");
 
-    canvas.setCursor(LCD_FELG_SM_X, LCD_FELG_SM_Y + 9);
+    canvas.setCursor(LCD_FELG_SM_X, LCD_FELG_SM_Y +18);
     canvas.print("Felipe Galindo");
 
-    canvas.setCursor(LCD_FELG_SM_X+3, LCD_FELG_SM_Y + 18);
+    canvas.setCursor(LCD_FELG_SM_X+3, LCD_FELG_SM_Y +27);
     canvas.print("in Minnesota");
 
     //print QR code
@@ -844,6 +896,7 @@ void LCD_Resume_from_Abort_Message(){
 }
 
 void LCD_WiFi_Scanning_Message(){
+    initMSG_has_been_flushed = false;
     canvas.setTextFont(2);
     canvas.setTextSize(1);
     canvas.setTextColor(BLACK);

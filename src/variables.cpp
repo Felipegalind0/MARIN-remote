@@ -218,6 +218,8 @@ double Robot_RealTcode_CPU_load = 0.0, Robot_BackgroundTask_CPU_load = 0.0;
 boolean initMSG_has_been_flushed = false;
 
 
+
+
 void resetVar() {
     abortWasHandled = false;
     power          = 0.0;

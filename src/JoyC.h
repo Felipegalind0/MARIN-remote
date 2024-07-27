@@ -14,6 +14,12 @@
 #define FIRMWARE_VERSION_REG 0xFE
 #define I2C_ADDRESS_REG      0xFF
 
+#define LIGHT_BLUE    0x7D7C
+#define SKY_BLUE      0x6DBE
+#define DEEP_SKY_BLUE 0x05FF
+#define DODGER_BLUE   0x1C9F
+#define MEDIUM_BLUE   0x001B
+
 #define CAL_MODE_STOP   0
 #define CAL_MODE_AUTO   1
 #define CAL_MODE_MANUAL 2
@@ -54,5 +60,7 @@ void cartesianToPolar(byte *x, byte *y, float *r, float *phi);
 void JoyC_setup();
 
 void JoyC_loop();
+
+void set_JoyC_LED_color(uint32_t color);
 
 #endif
