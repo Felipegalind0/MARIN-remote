@@ -25,6 +25,7 @@ void exec_BackgroundTask() {
       Warn_User_WiFi_Will_Be_Init = 0;  
       Serial.println("\nWireless_Setup()");
 
+      // WARNING, THIS IS NOT BLOCKING, THREAD WILL CONTINUE TO RUN AND ANOTHER THREAD WILL BE CREATED ON SAME CORE
       // xTaskCreatePinnedToCore(
       //     Wireless_Setup,   /* Function to implement the task */
       //     "Wireless_Setup", /* Name of the task */

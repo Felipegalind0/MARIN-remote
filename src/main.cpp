@@ -123,6 +123,7 @@ long push (>1sec) of power button: switch mode between standig and demo(circle)
 //#include <Vector.h>
 #include <Wire.h>
 #include "JoyC.h"
+#include "JoyC_loop.h"
 
 #include "esp_timer.h"
 
@@ -134,10 +135,7 @@ long push (>1sec) of power button: switch mode between standig and demo(circle)
 
 #include "BackgroundTask.h"
 
-
-TaskHandle_t Task0, Task1;
-
-SemaphoreHandle_t syncSemaphore;
+#include "LCD_loop.h"
 
 
 void dim_screen() {

@@ -42,7 +42,8 @@
 #define ABORT_M_H 60
 #define ABORT_M_R 5
 
-void LCD_loop();
+extern TFT_eSprite canvas;
+
 
 void LCD_Print_RealT_Times();
 
@@ -83,7 +84,7 @@ void LCD_Warn_WiFi_Message();
 
 void LCD_WiFi_Initializing_Message();
 
-uint16_t invertColor(uint16_t color);
+uint16_t invertColor16(uint16_t color);
 
 void LCD_Status_Message();
 
@@ -94,5 +95,7 @@ void LCD_CPU_Widget(int LCD_CPU_X, int LCD_CPU_Y,  double bk_cpu_percent, double
 
 void LCD_Western_Artificial_Horizon();
 
+uint16_t interpolateColor(int value, int minRange, int midRange, int maxRange, 
+                            uint16_t startColor, uint16_t midColor, uint16_t endColor);
 
 #endif

@@ -3,6 +3,7 @@
 
 #include "Arduino.h"
 #include "Wire.h"
+#include "variables.h"
 
 #define JoyC_ADDR            0x54
 #define ADC_VALUE_REG        0x00
@@ -55,12 +56,18 @@ class UNIT_JOYC {
     void resetCounter(void);
 };
 
+extern UNIT_JOYC joyc;
+
 void cartesianToPolar(byte *x, byte *y, float *r, float *phi);                                       
 
 void JoyC_setup();
 
-void JoyC_loop();
-
 void set_JoyC_LED_color(uint32_t color);
+
+void print_JoyC_min_max_values();
+void print_JoyC_center_values();
+void print_JoyC_mapped_values();
+void recalculate_X_center();
+void recalculate_Y_center();
 
 #endif
