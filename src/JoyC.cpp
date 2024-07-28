@@ -534,10 +534,10 @@ void JoyC_loop(){
                 JoyC_Y_up_down = JoyC_selector_CENTER;
                 JoyC_needs_to_return_to_center = true;
             //if (JoyC_up){
-                if (menu_Y_selector < Robot_menu_max_Y && menu_X_selector == ROBOT_MENU ||
-                    //menu_Y_selector < n_WiFi_Networks-1 && menu_X_selector == WIFI_MENU){
-                    menu_Y_selector < 1 && menu_X_selector == WIFI_NETWORKS||
-                    menu_Y_selector < WIFI_SHOW_INFO && menu_X_selector == WIFI_MENU){
+                if (menu_Y_selector < Robot_menu_max_Y          && menu_X_selector == ROBOT_MENU    ||
+                    menu_Y_selector < WIFI_NETWORKS_MENU_Y_MAX  && menu_X_selector == WIFI_NETWORKS ||
+                    menu_Y_selector < WIFI_MENU_Y_MAX           && menu_X_selector == WIFI_MENU     ){
+
                     menu_Y_selector++;
 
                     Serial.println("menu_Y_selector: " + String(menu_Y_selector));
@@ -571,19 +571,21 @@ void JoyC_loop(){
                 if (menu_Y_selector > Robot_menu_min_Y && menu_X_selector == ROBOT_MENU ||
                     //menu_Y_selector > 0                && menu_X_selector == WIFI_MENU  ){ // we want negative for proper layout
                     menu_Y_selector > 1-n_WiFi_Networks && menu_X_selector == WIFI_NETWORKS||
-                    menu_Y_selector > 0                && menu_X_selector == WIFI_MENU){
+                    menu_Y_selector > WIFI_MENU_Y_MIN   && menu_X_selector == WIFI_MENU){
                     menu_Y_selector--;
 
                     Serial.println("menu_Y_selector: " + String(menu_Y_selector));
 
-                    xTaskCreatePinnedToCore(
-                    Click_Sound, /* Task function. */
-                    "Click_Sound", /* Name of the task */
-                    10000,      /* Stack size in words */
-                    NULL,       /* Task input parameter */
-                    -2,          /* Priority of the task */
-                    NULL,       /* Task handle. */
-                    BackgroundCore);  /* Core where the task should run */
+                    // xTaskCreatePinnedToCore(
+                    // Click_Sound, /* Task function. */
+                    // "Click_Sound", /* Name of the task */
+                    // 10000,      /* Stack size in words */
+                    // NULL,       /* Task input parameter */
+                    // -2,          /* Priority of the task */
+                    // NULL,       /* Task handle. */
+                    // BackgroundCore);  /* Core where the task should run */
+                    //scheduleSoundTask(Click_Sound, "Click_Sound");
+                    scheduleSoundTask(Click_Sound);
                     
                 }
                 else {
@@ -644,7 +646,7 @@ void JoyC_loop(){
                 }
             }
             else {
-                Serial.println("L/R UP/DOWN MENU ERROR");
+                //Serial.println("L/R UP/DOWN MENU ERROR");
             }
         }
 

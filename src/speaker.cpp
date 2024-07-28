@@ -17,41 +17,88 @@ int clickDENIEDMelody[]   = {2000, 1000}; // A sequence of higher-pitched tones
 
 int clickMelody[]   = {2000}; // A sequence of higher-pitched tones
 
-int WirelessMelody[]   = {2000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, }; // A sequence of higher-pitched tones
+int WirelessMelody[]   = {2000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // A sequence of higher-pitched tones
 
-
+void scheduleSoundTask(void (*task)(void * pvParameters)){
+    xTaskCreatePinnedToCore(
+        task,   /* Function to implement the task */
+        "SoundTask", /* Name of the task */
+        10000,  /* Stack size in words */
+        NULL,  /* Task input parameter */
+        -2,  /* Priority of the task */
+        NULL,  /* Task handle. */
+        BackgroundCore); /* Core where the task should run */
+}
 // Play_Melody now takes an additional parameter for the size of the melody array
-void Play_Melody(int *remoteMelody, int size, int duration = 50) {
-    //const int duration = 50; // Short duration for each tone
+// void Play_Melody(int *remoteMelody, int duration = 50) {
+//     // //const int duration = 50; // Short duration for each tone
 
-    for (int i = 0; i < size; i++) {
-        ledcWriteTone(SPEAKER_CH, remoteMelody[i]); // Access the melody note directly
+//     int size = sizeof(*remoteMelody) / sizeof(remoteMelody[0]); // Calculate the size of the array
+//     Serial.println("Melody size: " + String(size));
+
+//     //get the size of the array
+
+
+//     for (int i = 0; i < size; i++) {
+//         ledcWriteTone(SPEAKER_CH, remoteMelody[i]); // Access the melody note directly
+//         vTaskDelay(duration / portTICK_PERIOD_MS);
+//     }
+
+//     ledcWriteTone(SPEAKER_CH, 0); // Turn off the sound
+// }
+template <size_t N>
+void Play_Melody(int (&melody)[N], int duration = 50) {
+    for (size_t i = 0; i < N; i++) {
+        ledcWriteTone(SPEAKER_CH, melody[i]); // Access the melody note directly
         vTaskDelay(duration / portTICK_PERIOD_MS);
     }
-
     ledcWriteTone(SPEAKER_CH, 0); // Turn off the sound
 }
 
-void Play_Wireless_Melody(int *remoteMelody, int size, int duration = 50) {
-    //const int duration = 50; // Short duration for each tone
+// void Play_Wireless_Melody(int *remoteMelody, int duration = 50) {
+//     //const int duration = 50; // Short duration for each tone
 
-    while (Pairing_State == SCANNING_SSIDS){
-        for (int i = 0; i < size && (Pairing_State == SCANNING_SSIDS); i++) {
-            ledcWriteTone(SPEAKER_CH, remoteMelody[i]); // Access the melody note directly
-            vTaskDelay(duration / portTICK_PERIOD_MS);
-            if (remoteMelody[i] == 0){
-                RED_LED(0);
-            }
-            else{
-                RED_LED(1);
-            }
-        }
+//     //int size = sizeof(remoteMelody) / sizeof(remoteMelody[0]); // BAD, this will return the size of a pointer, not the array
+//     // instead dereference the pointer and divide by the size of the first element
+//     int size = sizeof(*remoteMelody) / sizeof(remoteMelody[0]); // Calculate the size of the array
 
-    }
+//     while (Pairing_State == SCANNING_SSIDS){
+//         for (int i = 0; i < size && (Pairing_State == SCANNING_SSIDS); i++) {
+//             ledcWriteTone(SPEAKER_CH, remoteMelody[i]); // Access the melody note directly
+//             vTaskDelay(duration / portTICK_PERIOD_MS);
+//             if (remoteMelody[i] == 0){
+//                 RED_LED(0);
+//             }
+//             else{
+//                 RED_LED(1);
+//             }
+//         }
+
+//     }
 
     
 
+//     ledcWriteTone(SPEAKER_CH, 0); // Turn off the sound
+//     vTaskDelete(NULL);
+//     return;
+
+// }
+
+template <size_t N>
+void Play_Wireless_Melody(int (&melody)[N], int duration = 50) {
+    while (Pairing_State == SCANNING_SSIDS) {
+        for (size_t i = 0; i < N && (Pairing_State == SCANNING_SSIDS); i++) {
+            ledcWriteTone(SPEAKER_CH, melody[i]); // Access the melody note directly
+            vTaskDelay(duration / portTICK_PERIOD_MS);
+            if (melody[i] == 0) {
+                RED_LED(0);
+            } else {
+                RED_LED(1);
+            }
+        }
+    }
     ledcWriteTone(SPEAKER_CH, 0); // Turn off the sound
+    vTaskDelete(NULL);
 }
 
 
@@ -61,10 +108,15 @@ void Play_Wireless_Melody(int *remoteMelody, int size, int duration = 50) {
 #define SEGMENT_DURATION 500  // Duration of each segment in milliseconds
 #define FREQUENCY_SWITCH_INTERVAL 10
 
+void playClickSound(){
+    Play_Melody(clickMelody, 15);
+}
+
+
 void Click_DENIED_Sound( void * pvParameters ){
 
-    int sizeOfClickMelody = sizeof(clickDENIEDMelody) / sizeof(clickMelody[0]); // Calculate the size of the array
-    Play_Melody(clickDENIEDMelody, sizeOfClickMelody); // Pass the melody array and its size
+    //int sizeOfClickMelody = sizeof(clickDENIEDMelody) / sizeof(clickMelody[0]); // Calculate the size of the array
+    Play_Melody(clickDENIEDMelody); // Pass the melody array and its size
 
     vTaskDelete(NULL);
 
@@ -73,8 +125,8 @@ void Click_DENIED_Sound( void * pvParameters ){
 
 void Click_Sound( void * pvParameters ){
 
-    int sizeOfClickMelody = sizeof(clickMelody) / sizeof(clickMelody[0]); // Calculate the size of the array
-    Play_Melody(clickMelody, sizeOfClickMelody, 15); // Pass the melody array and its size
+    //int sizeOfClickMelody = sizeof(clickMelody) / sizeof(clickMelody[0]); // Calculate the size of the array
+    Play_Melody(clickMelody, 15); // Pass the melody array and its size
 
     vTaskDelete(NULL);
 
@@ -83,8 +135,8 @@ void Click_Sound( void * pvParameters ){
 
 void Wireless_Sound( void * pvParameters ){
 
-    int sizeOfWirelessMelody = sizeof(WirelessMelody) / sizeof(WirelessMelody[0]); // Calculate the size of the array
-    Play_Wireless_Melody(WirelessMelody, sizeOfWirelessMelody, 15); // Pass the melody array and its size
+    //int sizeOfWirelessMelody = sizeof(WirelessMelody) / sizeof(WirelessMelody[0]); // Calculate the size of the array
+    Play_Wireless_Melody(WirelessMelody, 15); // Pass the melody array and its size
 
     vTaskDelete(NULL);
 
@@ -95,15 +147,7 @@ void Wireless_Sound( void * pvParameters ){
 
 void StartUp_Sound( void * pvParameters ){
 
-    // //Play_Melody(remoteMelody);
-    // int sizeOfRemoteMelody = sizeof(remoteMelody) / sizeof(remoteMelody[0]); // Calculate the size of the array
-    // Play_Melody(remoteMelody, sizeOfRemoteMelody); // Pass the melody array and its size
-
-
-    // vTaskDelay(200);
-
-    int sizeOfStartupMelody = sizeof(startupMelody) / sizeof(startupMelody[0]); // Calculate the size of the array
-    Play_Melody(startupMelody, sizeOfStartupMelody, 200); // Pass the melody array and its size
+    Play_Melody(startupMelody, 200); // Pass the melody array and its size
 
     vTaskDelete(NULL);
 
@@ -112,15 +156,11 @@ void StartUp_Sound( void * pvParameters ){
 
 void Shutdown_Sound(){
 
-    // Play_Melody(remoteMelody);
-    int sizeOfRemoteMelody = sizeof(remoteMelody) / sizeof(remoteMelody[0]); // Calculate the size of the array
-    Play_Melody(remoteMelody, sizeOfRemoteMelody); // Pass the melody array and its size
-
+    Play_Melody(remoteMelody); // Pass the melody array and its size
 
     vTaskDelay(200);
 
-    int sizeOfShutdownMelody = sizeof(shutdownMelody) / sizeof(shutdownMelody[0]); // Calculate the size of the array
-    Play_Melody(shutdownMelody, sizeOfShutdownMelody, 200); // Pass the melody array and its size
+    Play_Melody(shutdownMelody, 200); // Pass the melody array and its size
 
 
 }

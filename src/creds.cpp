@@ -1,6 +1,6 @@
 #include "creds.h"
 
-String ssid = "-W6SLN"; // Your WiFi SSID
+String ssid = "FW6SLN"; // Your WiFi SSID
 String password = "Electronic701ShellCable"; // Your WiFi Password
 
 

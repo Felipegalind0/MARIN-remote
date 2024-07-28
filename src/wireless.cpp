@@ -356,6 +356,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
 void Wireless_Setup(){
 //void Wireless_Setup( void * pvParameters ){
 
+    update_status("Wireless_Setup()", BLUE);
 
     RED_LED(1);
 
@@ -392,12 +393,14 @@ void Wireless_Setup(){
     WiFi.begin(ssid, password);
 
     if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-        Serial.printf("WiFi Failed!\n");
-        //WiFi_connected = false;
-        WiFi_State = WIFI_DISCONNECTED;
+      WiFi.mode(WIFI_AP);
+      Serial.printf("WiFi Failed!\n");
+      update_status("WiFi Failed!", RED);
+      //WiFi_connected = false;
+      WiFi_State = WIFI_DISCONNECTED;
     }
     else {
-
+      
       //WiFi_connected = true;
       WiFi_State = WIFI_CONNECTED;
       set_JoyC_LED_color(SKY_BLUE);
@@ -406,6 +409,7 @@ void Wireless_Setup(){
       Serial.print(ssid);
       Serial.print("' with IP: ");
       Serial.println(WiFi.localIP());
+      update_status(String(ssid) + " Connected", BLUE);
       // WebSerial is accessible at "<IP Address>/webserial" in browser
 
     }

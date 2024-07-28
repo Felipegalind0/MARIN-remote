@@ -128,13 +128,16 @@ long push (>1sec) of power button: switch mode between standig and demo(circle)
 
 #include <esp32-hal-cpu.h>
 
+#include "BackgroundTask.h"
+
+#include "CPU_Scheduling.h"
+
+#include "BackgroundTask.h"
+
 
 TaskHandle_t Task0, Task1;
 
 SemaphoreHandle_t syncSemaphore;
-
-
-
 
 
 void dim_screen() {
@@ -583,129 +586,140 @@ void RealTcode( void * pvParameters ){
 // }
 
 
-void exec_BackgroundTask() {
-  if ((xSemaphoreTake(syncSemaphore, portMAX_DELAY) == pdTRUE) && (is_booted)) { // check that syncSemaphore is avaliable and the device is booted
-    //Serial.print("@BackgroundTask: ");
 
 
-    // 
-    // if (counter % logCounter == 0) {
-    //   if (serialMonitor) {
-    //     Serial.print("Logging data");
-    //     sendStatus();
-    //     logData();
-    //   }
-    // }
 
-    if (Warn_User_WiFi_Will_Be_Init >= Warn_User_WiFi_Will_Be_Init_Threshold) {
+// void exec_BackgroundTask() {
+//   if ((xSemaphoreTake(syncSemaphore, portMAX_DELAY) == pdTRUE) && (is_booted)) { // check that syncSemaphore is avaliable and the device is booted
+//     //Serial.print("@BackgroundTask: ");
 
-      //WiFi_Is_Initializing = true;
-      WiFi_State = WIFI_INITIALIZING;
-      JoyC_Xinput = false;
+
+//     // 
+//     // if (counter % logCounter == 0) {
+//     //   if (serialMonitor) {
+//     //     Serial.print("Logging data");
+//     //     sendStatus();
+//     //     logData();
+//     //   }
+//     // }
+
+//     if (Warn_User_WiFi_Will_Be_Init >= Warn_User_WiFi_Will_Be_Init_Threshold) {
+
+//       //WiFi_Is_Initializing = true;
+//       WiFi_State = WIFI_INITIALIZING;
+//       JoyC_Xinput = false;
       
-      Warn_User_WiFi_Will_Be_Init = 0;  
-      Serial.println("\nWireless_Setup()");
+//       Warn_User_WiFi_Will_Be_Init = 0;  
+//       Serial.println("\nWireless_Setup()");
 
-      // xTaskCreatePinnedToCore(
-      //     Wireless_Setup,   /* Function to implement the task */
-      //     "Wireless_Setup", /* Name of the task */
-      //     10000,      /* Stack size in words */
-      //     NULL,       /* Task input parameter */
-      //     -2,          /* Priority of the task */
-      //     NULL,       /* Task handle. */
-      //     BackgroundCore);  /* Core where the task should run */
+//       // xTaskCreatePinnedToCore(
+//       //     Wireless_Setup,   /* Function to implement the task */
+//       //     "Wireless_Setup", /* Name of the task */
+//       //     10000,      /* Stack size in words */
+//       //     NULL,       /* Task input parameter */
+//       //     -2,          /* Priority of the task */
+//       //     NULL,       /* Task handle. */
+//       //     BackgroundCore);  /* Core where the task should run */
 
 
-      //digitalWrite(LED, HIGH);
-      //yield();  // Yield the processor to other tasks so no other FreeRTOS wireless tasks are pending
-      Wireless_Setup();
-      //yield(); // Yield the processor to other tasks so no other FreeRTOS wireless tasks are pending
+//       //digitalWrite(LED, HIGH);
+//       //yield();  // Yield the processor to other tasks so no other FreeRTOS wireless tasks are pending
+//       Wireless_Setup();
+//       //yield(); // Yield the processor to other tasks so no other FreeRTOS wireless tasks are pending
 
       
 
-      return;
-    }
+//       return;
+//     }
 
 
-    if ((Pairing_State == PAIRING_REQUESTED) && WiFi_State == WIFI_INITIALIZED){
-    //if (pairRequested && WiFi_State == WIFI_INITIALIZED){  //WiFi_Is_Initialized) {
+//     if ((Pairing_State == PAIRING_REQUESTED) && WiFi_State == WIFI_INITIALIZED){
+//     //if (pairRequested && WiFi_State == WIFI_INITIALIZED){  //WiFi_Is_Initialized) {
 
-      Serial.println("Pairing_State = PAIRING_REQUESTED\nWiFi_State = WIFI_INITIALIZED");
-      // Check for pairing
-      update_status("Scan WiFi", BLUE);
+//       Serial.println("Pairing_State = PAIRING_REQUESTED\nWiFi_State = WIFI_INITIALIZED");
+//       // Check for pairing
+//       update_status("Scan WiFi", BLUE);
 
-      get_ssids();
+//       get_ssids();
 
-      //print_WiFi_Networks();
+//       //print_WiFi_Networks();
 
-      // Serial.print("Pairing process complete; is_paired = ");
-      // Serial.println((is_paired ? "true" : "false"));
-      // pairRequested = false;
-      return;
-    }
+//       // Serial.print("Pairing process complete; is_paired = ");
+//       // Serial.println((is_paired ? "true" : "false"));
+//       // pairRequested = false;
+//       return;
+//     }
 
     
 
-    //Serial.println("Updating LCD");
-    // Update the LCD display
-    //Serial.println("@exec_BackgroundTask: DONE");
-  }
+//     //Serial.println("Updating LCD");
+//     // Update the LCD display
+//     //Serial.println("@exec_BackgroundTask: DONE");
+//   }
 
-}
-
-
-
-void BackgroundTask( void * pvParameters ) {
-  for (;;) {  // Infinite loop for background task
+// }
 
 
-    BackgroundTask_execution_time_start = esp_timer_get_time(); // Record the start time of the loop
-
-    BackgroundTask_no_execution_time = BackgroundTask_execution_time_start - BackgroundTask_execution_time_end; // Calculate the time not spent executing the loop
-
-    yield(); // Yield the processor to other tasks
-    // Wait for the syncSemaphore to be given by the RealTcode task
-
-    exec_BackgroundTask(); // Execute the background task
-
-    //Serial.println("@BackgroundTask: exec DONE");
-
-    yield(); // Yield the processor to other tasks
 
 
-    // Record the end time of the loop
-    BackgroundTask_execution_time_end = esp_timer_get_time();
 
-    // Calculate the time taken to execute the loop
-    BackgroundTask_execution_time = BackgroundTask_execution_time_end - BackgroundTask_execution_time_start;
 
-    // Calculate the total execution time and CPU load
-    BackgroundTask_total_execution_time = BackgroundTask_execution_time + BackgroundTask_no_execution_time;
 
-    if (BackgroundTask_total_execution_time != 0 && BackgroundTask_execution_time != 0) {
 
-      // Calculate the CPU load
-      BackgroundTask_CPU_load = (BackgroundTask_execution_time * 100/ BackgroundTask_total_execution_time);
+// void BackgroundTask( void * pvParameters ) {
+//   for (;;) {  // Infinite loop for background task
 
-      // Serial.print("@BackgroundTask_no_execution_time_start: ");
-      // Serial.print(BackgroundTask_no_execution_time_start);
-      // Serial.print(" @BackgroundTask_no_execution_time_end: ");
-      // Serial.print(BackgroundTask_no_execution_time_end);
 
-      // Serial.print("@BackgroundTask_no_execution_time: "); 
-      // Serial.print(BackgroundTask_no_execution_time);
-      // Serial.print(" @BackgroundTask_total_execution_time: ");
-      // Serial.print(BackgroundTask_total_execution_time);
-      // Serial.print(" @BackgroundTask_execution_time: ");
-      // Serial.print(BackgroundTask_execution_time);
-      // Serial.print(" @BackgroundTask: CPU load = ");
-      // Serial.println(BackgroundTask_CPU_load);
+//     BackgroundTask_execution_time_start = esp_timer_get_time(); // Record the start time of the loop
 
-    }
+//     BackgroundTask_no_execution_time = BackgroundTask_execution_time_start - BackgroundTask_execution_time_end; // Calculate the time not spent executing the loop
 
-    vTaskDelay(pdMS_TO_TICKS(interval)); // Delay the task for a specific interval (in milliseconds) to control execution frequency  
-  }
-}
+//     yield(); // Yield the processor to other tasks
+//     // Wait for the syncSemaphore to be given by the RealTcode task
+
+//     exec_BackgroundTask(); // Execute the background task
+
+//     //Serial.println("@BackgroundTask: exec DONE");
+
+//     yield(); // Yield the processor to other tasks
+
+
+//     // Record the end time of the loop
+//     BackgroundTask_execution_time_end = esp_timer_get_time();
+
+//     // Calculate the time taken to execute the loop
+//     BackgroundTask_execution_time = BackgroundTask_execution_time_end - BackgroundTask_execution_time_start;
+
+//     // Calculate the total execution time and CPU load
+//     BackgroundTask_total_execution_time = BackgroundTask_execution_time + BackgroundTask_no_execution_time;
+
+//     if (BackgroundTask_total_execution_time != 0 && BackgroundTask_execution_time != 0) {
+
+//       // Calculate the CPU load
+//       BackgroundTask_CPU_load = (BackgroundTask_execution_time * 100/ BackgroundTask_total_execution_time);
+
+//       // Serial.print("@BackgroundTask_no_execution_time_start: ");
+//       // Serial.print(BackgroundTask_no_execution_time_start);
+//       // Serial.print(" @BackgroundTask_no_execution_time_end: ");
+//       // Serial.print(BackgroundTask_no_execution_time_end);
+
+//       // Serial.print("@BackgroundTask_no_execution_time: "); 
+//       // Serial.print(BackgroundTask_no_execution_time);
+//       // Serial.print(" @BackgroundTask_total_execution_time: ");
+//       // Serial.print(BackgroundTask_total_execution_time);
+//       // Serial.print(" @BackgroundTask_execution_time: ");
+//       // Serial.print(BackgroundTask_execution_time);
+//       // Serial.print(" @BackgroundTask: CPU load = ");
+//       // Serial.println(BackgroundTask_CPU_load);
+
+//     }
+
+//     vTaskDelay(pdMS_TO_TICKS(interval)); // Delay the task for a specific interval (in milliseconds) to control execution frequency  
+//   }
+// }
+
+
+
 
 #define RealTcore 1
 #define BackgroundCore 0

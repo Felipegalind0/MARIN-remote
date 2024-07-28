@@ -26,7 +26,7 @@ void LCD_Top_1_line_text(String text, byte text_size, int color, byte widget_x, 
 
     // text will be something like " -#dB SSID", split by the first space and compare with ssid to see if it is the same
     String txt_ssid = text.substring(text.indexOf(" ")+1);
-    Serial.println("txt_ssid: " + txt_ssid + " ssid: " + ssid);
+    // Serial.println("txt_ssid: " + txt_ssid + " ssid: " + ssid);
     if (txt_ssid.equals(ssid)){
         
         canvas.setTextColor(BLUE);
@@ -128,6 +128,8 @@ String get_menu_str(int X_index, int Y_index){
                     return "     Connect";
                 case WIFI_MENU_SCAN:
                     return "      ReScan";
+                case WIFI_SET_NUM:
+                    return "     Set Num";
 
 
                 default:
@@ -185,7 +187,7 @@ void LCD_Menu(){
     if( (menu_X_selector == ROBOT_MENU && ((menu_Y_selector+1) <= Robot_menu_max_X)) ||
         // (menu_X_selector == WIFI_MENU && ((menu_Y_selector+1) <= n_WiFi_Networks-1)) ){
         (menu_X_selector == WIFI_NETWORKS && (menu_Y_selector < 1)) ||
-        (menu_X_selector == WIFI_MENU && (menu_Y_selector < WIFI_SHOW_INFO)) ){
+        (menu_X_selector == WIFI_MENU && (menu_Y_selector < WIFI_MENU_Y_MAX)) ){
 
 
         robot_menu_text_buf = get_menu_str(menu_X_selector, menu_Y_selector+1);
@@ -217,7 +219,7 @@ void LCD_Menu(){
     if( (menu_X_selector == ROBOT_MENU && ((menu_Y_selector-1) >= Robot_menu_min_X)) ||
         // (menu_X_selector == WIFI_MENU && ((menu_Y_selector-1) >= 0)) ){
         (menu_X_selector == WIFI_NETWORKS && (menu_Y_selector > 1-n_WiFi_Networks)) ||
-        (menu_X_selector == WIFI_MENU && (menu_Y_selector > 0))     ){
+        (menu_X_selector == WIFI_MENU && (menu_Y_selector > WIFI_MENU_Y_MIN))     ){
 
 
         robot_menu_text_buf = get_menu_str(menu_X_selector, menu_Y_selector-1);
