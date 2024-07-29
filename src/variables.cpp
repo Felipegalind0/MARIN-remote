@@ -54,7 +54,7 @@ byte robot_state = UNKNOWN_ARMED_STATUS;
 // boolean robot_ARM_requested = false;
 // boolean robot_DISARM_requested = false;
 
-int menu_X_selector = 0;
+int g_menu_X_selector = 0;
 
 int menu_Y_selector = 0;
 
@@ -204,6 +204,9 @@ int x = 0;  // Defines robot rotation rate    + = R     &   - = L
 int y = 0;  // Defines robot FWD/BACK         + = FWD   &   - = BACK
 
 int n_WiFi_Networks = 0;
+String g_menu_selected_WiFi = "-";
+
+boolean g_set_num_remote_too = true;
 
 
 

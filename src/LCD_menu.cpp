@@ -1,6 +1,7 @@
 #include "LCD_menu.h"
 
 
+
 String get_menu_title(int X_index){
     switch (X_index){
         case ROBOT_MENU:
@@ -9,7 +10,10 @@ String get_menu_title(int X_index){
             return " < WiFi Networks ";
 
         case WIFI_MENU:
-            return " < WiFi Menu ";
+            //return " < WiFi Menu ";
+            return g_menu_selected_WiFi;
+        case SET_NUM_MENU: 
+            return "< " + g_menu_selected_WiFi + "";
         default:
             return "";
     }
@@ -43,7 +47,8 @@ String get_menu_str(int X_index, int Y_index){
 
         case WIFI_NETWORKS:
 
-            if (Y_index < 1){
+            if (Y_index < 1){ //if not rescan
+                // {strength}dB {SSID}
                 return String(WiFi.RSSI(-Y_index))+ "dB " + WiFi.SSID(-Y_index); 
             }
             else if (Y_index == 1){
@@ -52,19 +57,40 @@ String get_menu_str(int X_index, int Y_index){
 
 
         case WIFI_MENU:
+
             switch (Y_index){
                 case WIFI_SHOW_INFO:
                     return "      Info";
                 case WIFI_MENU_CONNECT_DISCONNECT:
-                    return "     Connect";
+                    if (WiFi_State == WIFI_CONNECTED && ssid.equals(g_menu_selected_WiFi)){
+                        return "  Disconnect";
+                    }
+
+                    else{
+                        return "     Connect";
+                    }
                 case WIFI_MENU_SCAN:
                     return "      ReScan";
                 case WIFI_SET_NUM:
+
+
                     return "     Set Num";
 
 
                 default:
                     return "";
+            }
+
+        case SET_NUM_MENU:
+            //return "Set Num";
+            if (Y_index>0){
+                return " Set #" + String(Y_index);
+            }
+            else if(Y_index = -1){
+                return " Set remote # too ON";
+            }
+            else{
+                return " Set Num";
             }
 
         default: 
@@ -133,7 +159,7 @@ void LCD_Menu(){
 
 
     //LCD_Top_1_line_text("    Robot Menu", 1, WHITE, 5, 5, 127, 20, 5);
-    String robot_menu_text_buf = get_menu_title(menu_X_selector);
+    String robot_menu_text_buf = get_menu_title(g_menu_X_selector);
 
     canvas.fillRoundRect(0, 45, 135, 82, 5, DARKGREY);
 
@@ -143,7 +169,7 @@ void LCD_Menu(){
     
 
 
-    switch (menu_X_selector){
+    switch (g_menu_X_selector){
         case ROBOT_MENU:
             menu_rect_text_size = 2;
             break;
@@ -164,13 +190,15 @@ void LCD_Menu(){
 
 
 
-    if( (menu_X_selector == ROBOT_MENU && ((menu_Y_selector+1) <= Robot_menu_max_X)) ||
-        // (menu_X_selector == WIFI_MENU && ((menu_Y_selector+1) <= n_WiFi_Networks-1)) ){
-        (menu_X_selector == WIFI_NETWORKS && (menu_Y_selector < 1)) ||
-        (menu_X_selector == WIFI_MENU && (menu_Y_selector < WIFI_MENU_Y_MAX)) ){
+    if( (g_menu_X_selector == ROBOT_MENU && ((menu_Y_selector+1) <= Robot_menu_max_X)) ||
+        // (g_menu_X_selector == WIFI_MENU && ((menu_Y_selector+1) <= n_WiFi_Networks-1)) ){
+        (g_menu_X_selector == WIFI_NETWORKS && (menu_Y_selector < 1)) ||
+        (g_menu_X_selector == WIFI_MENU && (menu_Y_selector < WIFI_MENU_Y_MAX)) ||
+        (g_menu_X_selector == SET_NUM_MENU && (menu_Y_selector < SET_NUM_MENU_Y_MAX))
+        ){
 
 
-        robot_menu_text_buf = get_menu_str(menu_X_selector, menu_Y_selector+1);
+        robot_menu_text_buf = get_menu_str(g_menu_X_selector, menu_Y_selector+1);
 
         //LCD_Top_1_line_text(robot_menu_text_buf, 1, TFT_LIGHTGREY, 5, 50, 131, 20, 10);
         LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, TFT_LIGHTGREY, upper_menu_rect_x, upper_menu_rect_y, upper_menu_rect_w, upper_menu_rect_h, upper_menu_rect_r);
@@ -184,7 +212,7 @@ void LCD_Menu(){
     }
 
 
-    robot_menu_text_buf = get_menu_str(menu_X_selector, menu_Y_selector);
+    robot_menu_text_buf = get_menu_str(g_menu_X_selector, menu_Y_selector);
 
     LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, WHITE, 2, 85, 131, 20, 7);
 
@@ -196,13 +224,14 @@ void LCD_Menu(){
     # define lower_menu_rect_r 10
 
 
-    if( (menu_X_selector == ROBOT_MENU && ((menu_Y_selector-1) >= Robot_menu_min_X)) ||
-        // (menu_X_selector == WIFI_MENU && ((menu_Y_selector-1) >= 0)) ){
-        (menu_X_selector == WIFI_NETWORKS && (menu_Y_selector > 1-n_WiFi_Networks)) ||
-        (menu_X_selector == WIFI_MENU && (menu_Y_selector > WIFI_MENU_Y_MIN))     ){
+    if( (g_menu_X_selector == ROBOT_MENU && ((menu_Y_selector-1) >= Robot_menu_min_X))   ||
+        // (g_menu_X_selector == WIFI_MENU && ((menu_Y_selector-1) >= 0)) ){
+        (g_menu_X_selector == WIFI_NETWORKS  && (menu_Y_selector > 1-n_WiFi_Networks))   ||
+        (g_menu_X_selector == WIFI_MENU      && (menu_Y_selector > WIFI_MENU_Y_MIN))     ||
+        (g_menu_X_selector == SET_NUM_MENU   && (menu_Y_selector > SET_NUM_MENU_Y_MIN))  ){
 
 
-        robot_menu_text_buf = get_menu_str(menu_X_selector, menu_Y_selector-1);
+        robot_menu_text_buf = get_menu_str(g_menu_X_selector, menu_Y_selector-1);
 
         //LCD_Top_1_line_text(robot_menu_text_buf, 1, TFT_LIGHTGREY, 2, 110, 131, 20, 10);
         LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, TFT_LIGHTGREY, lower_menu_rect_x, lower_menu_rect_y, lower_menu_rect_w, lower_menu_rect_h, lower_menu_rect_r);

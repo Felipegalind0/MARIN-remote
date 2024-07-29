@@ -753,7 +753,7 @@ void get_ssids(){
         setPairingState(NO_ROBOTS_FOUND);
         menu_active = true;
         JoyC_Xinput = true;
-        menu_X_selector = WIFI_NETWORKS;
+        g_menu_X_selector = WIFI_NETWORKS;
         menu_Y_selector = 0;
 
 
@@ -775,7 +775,7 @@ void get_ssids(){
         setPairingState(MULTIPLE_ROBOTS_FOUND);
         menu_active = true;
         JoyC_Xinput = true;
-        menu_X_selector = WIFI_NETWORKS;
+        g_menu_X_selector = WIFI_NETWORKS;
         menu_Y_selector = -(found_robot_ssid_num);
 
       }
@@ -785,7 +785,7 @@ void get_ssids(){
         setPairingState(ROBOT_NUM_NOT_FOUND);
         menu_active = true;
         JoyC_Xinput = true;
-        menu_X_selector = WIFI_NETWORKS;
+        g_menu_X_selector = WIFI_NETWORKS;
         menu_Y_selector = -(found_robot_ssid_num);
       }
 
@@ -800,7 +800,7 @@ void get_ssids(){
   // yield();
   // menu_active = true;
   // JoyC_Xinput = true;
-  // menu_X_selector = WIFI_MENU;
+  // g_menu_X_selector = WIFI_MENU;
   // LCD_flush();
 
 }

@@ -33,7 +33,8 @@ enum Remote_Menu_X_Options {
   REMOTE_MENU = -1, 
   ROBOT_MENU = 0,
   WIFI_NETWORKS = 1,
-  WIFI_MENU = 111
+  WIFI_MENU = 111,
+  SET_NUM_MENU = 120
 };
 
 enum Robot_Menu_Y_Options {
@@ -61,6 +62,8 @@ enum WIFI_MENU_OPTIONS {
 };
 #define WIFI_MENU_Y_MIN WIFI_SET_NUM
 #define WIFI_MENU_Y_MAX WIFI_SHOW_INFO
+#define SET_NUM_MENU_Y_MIN -1
+#define SET_NUM_MENU_Y_MAX 16
 
 extern uint8_t broadcastAddress[6]; // Array to store the MAC address
 
@@ -81,7 +84,7 @@ extern boolean isArmed;
 
 # define Robot_menu_max_X 1
 
-extern int menu_X_selector, menu_Y_selector;
+extern int g_menu_X_selector, menu_Y_selector;
 
 extern int menu_min_X, menu_max_X, menu_min_Y, menu_max_Y;
 
@@ -98,6 +101,11 @@ extern float deviceTemp;
 extern int x, y;
 
 extern int n_WiFi_Networks;
+
+extern String g_menu_selected_WiFi;
+
+extern boolean g_set_num_remote_too;
+
 
 extern float vBatt, voltAve;
 
