@@ -3,34 +3,44 @@
 #include "speaker.h"
 #include "IO.h"
 
+void RED_LED(bool state){
+    digitalWrite(LED, !state);
+}
+
 //Check if button has been pressed
 void CheckButtons() {
-    byte pbtn = M5.Axp.GetBtnPress();
+    Pbtn = M5.Axp.GetBtnPress();
     //byte Abtn = 
-    M5.BtnA.read();
-    M5.BtnB.read();
-    Abtn = (M5.BtnA.wasPressed());
-    Bbtn = (M5.BtnB.wasPressed());
+    // M5.BtnA.read();
+    // M5.BtnB.read();
 
-    if (pbtn == 2){
 
-        Shutdown_Sound();
+    if (Pbtn == 2){ // short push
 
-        esp_restart();
+        // Shutdown_Sound();
+
+        // esp_restart();
 
     }
         
         
-    else if (pbtn == 1){
-        setMode(true);  // long push
+    else if (Pbtn == 1){  //long push
+        //setMode(true);  // long push
     }
 
-    if (Abtn){
-      WebSerial.println("A Button Pressed");
-    }
+    // if (Abtn){
+    //   Serial.println("A Button Pressed");
+    // }
 
-    if (Bbtn){
-      WebSerial.println("B Button Pressed");
+    // if (Bbtn){
+    //   Serial.println("B Button Pressed");
+    // }
+
+    if (Pbtn == 2){
+      Serial.println("Power Button Pressed");
+    }
+    else if (Pbtn == 1){
+      Serial.println("Power Button Long Pressed");
     }
 
 }

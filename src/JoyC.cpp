@@ -3,7 +3,46 @@
 #include <Wire.h>
 #include "Arduino.h"
 #include "JoyC.h"
-#include "variables.h"
+
+#include <cmath> // Include the cmath library for sqrt and atan2 functions
+
+void cartesianToPolar(byte *x, byte *y, float *r, float *phi) {
+    // // Normalize x and y to have 0,0 at the center
+    // float x_normalized = JoyC_X - 50.0;
+    // float y_normalized = JoyC_Y - 50.0;
+
+    // // Calculate the radius
+    // JoyC_r = sqrt(x_normalized * x_normalized + y_normalized * y_normalized);
+
+    // // Calculate the angle in radians
+    // JoyC_Phi = atan2(y_normalized, x_normalized);
+
+    // // for angle in degrees, uncomment the following line
+    // JoyC_Phi = JoyC_Phi * (180.0 / M_PI);
+
+    // //Serial.println("r: " + String(JoyC_r) + " φ: " + String(JoyC_Phi));
+
+
+
+    // UPDATED TO USE POINTERS
+
+    // Normalize x and y to have 0,0 at the center
+    float x_normalized = *x - 50.0;
+    float y_normalized = *y - 50.0;
+
+    // Calculate the radius
+    *r = sqrt(x_normalized * x_normalized + y_normalized * y_normalized);
+
+    // Calculate the angle in radians
+    *phi = atan2(y_normalized, x_normalized);
+
+    // for angle in degrees, uncomment the following line
+    *phi = *phi * (180.0 / M_PI);
+
+    //Serial.println("r: " + String(JoyC_r) + " φ: " + String(JoyC_Phi));
+
+}
+
 
 void UNIT_JOYC::writeBytes(uint8_t addr, uint8_t reg, uint8_t *buffer,
                            uint8_t length) {
@@ -155,16 +194,15 @@ uint8_t UNIT_JOYC::getFirmwareVersion(void) {
 
 
 
-
-
-
-
-
 UNIT_JOYC joyc;
 
 void JoyC_setup(){
-    Serial.print("@JoyC_setup");
+    Serial.println("@JoyC_setup");
     joyc.begin();
+}
+
+void set_JoyC_LED_color(uint32_t color){
+    joyc.setLEDColor(0, color);
 }
 
 
@@ -183,14 +221,14 @@ void print_JoyC_center_values(){
 }
 
 void print_JoyC_min_max_values(){
-    Serial.print("Joyc_X_min: ");
-    Serial.print(Joyc_X_min);
+    Serial.print("Joyc_X_raw_min: ");
+    Serial.print(Joyc_X_raw_min);
     Serial.print(" Joyc_X_max: ");
     Serial.print(Joyc_X_max);
-    Serial.print(" Joyc_Y_min: ");
-    Serial.print(Joyc_Y_min);
-    Serial.print(" Joyc_Y_max: ");
-    Serial.println(Joyc_Y_max);
+    Serial.print(" Joyc_Y_raw_min: ");
+    Serial.print(Joyc_Y_raw_min);
+    Serial.print(" Joyc_Y_raw_max: ");
+    Serial.println(Joyc_Y_raw_max);
 }
 
 void print_JoyC_mapped_values(){
@@ -201,252 +239,12 @@ void print_JoyC_mapped_values(){
 }
 
 void recalculate_X_center(){
-    Joyc_X_center = (JoyC_X_raw + Joyc_X_center + Joyc_X_min + Joyc_X_max) / 4;
+    Joyc_X_center = (JoyC_X_raw + Joyc_X_center + Joyc_X_raw_min + Joyc_X_max) / 4;
 }
 
 void recalculate_Y_center(){
-    Joyc_Y_center = (JoyC_Y_raw + Joyc_Y_center + Joyc_Y_min + Joyc_Y_max) / 4;
+    Joyc_Y_center = (JoyC_Y_raw + Joyc_Y_center + Joyc_Y_raw_min + Joyc_Y_raw_max) / 4;
 }
 
-void JoyC_loop(){
-    //joyc.update();
 
-    JoyC_X_raw = joyc.getADCValue(0);
-
-    JoyC_Y_raw = joyc.getADCValue(1);
-
-    //print_JoyC_raw_values();
-
-    //print_JoyC_center_values();
-
-    boolean should_print_raw = false;
-    boolean should_print_min_max = false;
-    boolean should_print_center = false;
-    boolean should_print_mapped = false;
-
-    boolean should_recalculate_X_center = false;
-    boolean should_recalculate_Y_center = false;
-
-    int delta_X = (JoyC_X_raw - Joyc_X_center);
-
-    int abs_delta_X =  abs(delta_X);
-
-    if (JoyC_X_raw < Joyc_X_min) { // if the raw X value is less than the minimum value
-        JoyC_In_X_DeadZone = false;
-
-        Joyc_X_min = JoyC_X_raw;
-
-        JoyC_X = 0;
-    }
-
-    else if (JoyC_X_raw > Joyc_X_max) { // if the raw X value is greater than the maximum value
-        JoyC_In_X_DeadZone = false;    
-    
-        Joyc_X_max = JoyC_X_raw;
-
-        JoyC_X = 100;
-    }
-
-    else if(abs_delta_X < JoyC_X_deadzone){ // if the raw X value is within the deadzone
-        JoyC_In_X_DeadZone = true;
-        //Serial.print("dz_x ");
-        JoyC_X = 50;
-
-        int delta_X_prev = (JoyC_X_raw - JoyC_X_raw_prev);
-
-        byte abs_delta_X_prev =  abs(delta_X_prev);
-
-        if (abs_delta_X_prev < 10){
-
-            JoyC_X_Cycles_In_Deadzone++;
-
-            if (JoyC_X_Cycles_In_Deadzone > 100){
-                should_recalculate_X_center = true;
-                JoyC_X_Cycles_In_Deadzone = 0;
-            }
-            
-        }
-            
-        else {
-            JoyC_X_Cycles_In_Deadzone = 0;
-        }
-    }
-
-    else { // if the raw X value is outside the deadzone and within the min and max values
-        JoyC_In_X_DeadZone = false;
-         JoyC_X = map(JoyC_X_raw, Joyc_X_min, Joyc_X_max, 0, 100);
-    }
-
-
-    int delta_Y = (JoyC_Y_raw - Joyc_Y_center);
-
-    int abs_delta_Y =  abs(delta_Y);
-
-
-    if (JoyC_Y_raw < Joyc_Y_min) { // if the Y raw value is less than the minimum value
-        JoyC_In_y_DeadZone = false;
-        Joyc_Y_min = JoyC_Y_raw;
-
-        JoyC_Y = 0;
-
-    }
-
-    else if (JoyC_Y_raw > Joyc_Y_max) { // if the raw Y value is greater than the maximum value
-        JoyC_In_y_DeadZone = false;
-        Joyc_Y_max = JoyC_Y_raw;
-
-        JoyC_Y = 100;
-
-    }
-
-    else if (abs_delta_Y < JoyC_Y_deadzone){ // if the raw Y value is within the deadzone
-        JoyC_In_y_DeadZone = true;
-        //Serial.print("dz_y");
-
-        JoyC_Y = 50;
-
-        int delta_Y_prev = (JoyC_Y_raw - JoyC_Y_raw_prev);
-
-        byte abs_delta_Y_prev = abs(delta_Y_prev);
-
-        if (abs_delta_Y_prev < 10){ // if difference between the current and previous Y values is less than 10
-
-            JoyC_Y_Cycles_In_Deadzone++;
-
-            if (JoyC_Y_Cycles_In_Deadzone > 100){
-                // average the center value
-                should_recalculate_Y_center = true;
-                JoyC_Y_Cycles_In_Deadzone = 0;
-            }
-            
-        }
-            
-        else {
-            JoyC_Y_Cycles_In_Deadzone = 0;
-        }
-        
-
-
-    }
-
-    else { // if the raw Y value is outside the deadzone and within the min and max values
-        JoyC_In_y_DeadZone = false;
-         JoyC_Y = map(JoyC_Y_raw, Joyc_Y_min, Joyc_Y_max, 0, 100);
-    }
-
-
-    if (JoyC_Xinput){
-        // determine left/right and up/down
-        if (JoyC_X < 25){
-
-            if (JoyC_X_left_right == 0){
-                JoyC_left = true;
-                Serial.print("left");
-            }
-            JoyC_X_left_right = -1;
-        }
-        else if (JoyC_X > 75){
-
-            if (JoyC_X_left_right == 0){
-                JoyC_right = true;
-                Serial.print("right");
-            }
-
-            JoyC_X_left_right = 1;
-        }
-        else {
-            JoyC_X_left_right = 0;
-        }
-
-        if (JoyC_Y < 25){
-
-            if (JoyC_Y_up_down == 0){
-                JoyC_down = true;
-                Serial.print("down");
-            }
-            JoyC_Y_up_down = -1;
-        }
-        else if (JoyC_Y > 75){
-
-            if (JoyC_Y_up_down == 0){
-                JoyC_up = true;
-                Serial.print("up");
-            }
-
-            JoyC_Y_up_down = 1;
-        }
-        else {
-            JoyC_Y_up_down = 0;
-        }
-
-        if (JoyC_X_left_right == 0 && JoyC_Y_up_down == 0){
-            JoyC_needs_to_return_to_center = false;
-        }
-
-
-        if (Warn_User_WiFi_Will_Be_Init && 
-        (JoyC_up || JoyC_down || JoyC_left || JoyC_right) && 
-        !JoyC_needs_to_return_to_center){
-\
-            Serial.print("WAbort: ");
-            Serial.print(Warn_User_WiFi_Will_Be_Init_Selector_Abort);
-
-            Serial.print(" Jup:");
-            Serial.print(JoyC_up);
-
-            Serial.print(" Jdown:");
-            Serial.print(JoyC_down);
-
-            Serial.print(" Jleft:");
-            Serial.print(JoyC_left);
-
-            Serial.print(" Jright:");
-            Serial.print(JoyC_right);
-
-            Serial.print(" Jntrtc:");
-            Serial.print(JoyC_needs_to_return_to_center);
-
-            Serial.println();
-
-
-            Warn_User_WiFi_Will_Be_Init_Selector_Abort = !Warn_User_WiFi_Will_Be_Init_Selector_Abort;
-
-            JoyC_up = false;
-            JoyC_down = false;
-            JoyC_left = false;
-            JoyC_right = false;
-
-            JoyC_needs_to_return_to_center = true;
-            
-            Warn_User_WiFi_Will_Be_Init = 1;
-        } // if the Init WiFi Warning is active and the user moves the joystick, toggle the selector
-
-    }
-
-
-
-    
-    if (should_print_min_max){
-        print_JoyC_min_max_values();
-    }
-
-    if (should_print_center){
-        print_JoyC_center_values();
-    }
-
-    if (should_print_mapped){
-        print_JoyC_mapped_values();
-    }
-    
-    if (should_recalculate_X_center){
-        recalculate_X_center();
-    }
-    
-    if(should_recalculate_Y_center){
-        recalculate_Y_center();
-    }
-
-    JoyC_X_raw_prev = JoyC_X_raw;
-    JoyC_Y_raw_prev = JoyC_Y_raw;
-}
 

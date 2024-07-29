@@ -7,6 +7,7 @@ void Setup_Pinout() {
     // Place your code here
 
     pinMode(LED, OUTPUT);
+    digitalWrite(LED, HIGH);
     
 
 }

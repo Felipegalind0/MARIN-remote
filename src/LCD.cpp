@@ -1,8 +1,6 @@
-#include <M5StickCPlus.h>
-#include "IO.h"
-#include "variables.h"
+// --- LCD.cpp ---
 #include "LCD.h"
-#include "COMS.h"
+
 
 uint16_t invertColor16(uint16_t color) {
     // Invert the color: 0xFFFF is max value for 16-bit, color is the original color
@@ -16,172 +14,7 @@ void LCD_flush(){
     canvas.fillSprite(BLACK);
 }
 
-boolean print_LCD_Loop = false;
 
-boolean print_updating_battery_voltage = false;
-
-void LCD_loop(){
-
-    if (print_LCD_Loop){
-        Serial.println("LCD_Print_Counter()");
-    }
-
-    LCD_Print_Counter();
-
-    if (print_LCD_Loop){
-        Serial.println("LCD_Print_Counter() DONE");
-    }
-
-    
-   
-
-
-
-    if ((counter % 100) == 0) {
-    //if (true) {
-        if (print_updating_battery_voltage){
-            Serial.print("Updating Battery Voltage: ");
-        }
-        
-        updateBatVolt();
-
-        if(print_updating_battery_voltage){
-            Serial.print("LCD_loop() running on core ");
-            Serial.println(xPortGetCoreID());
-        }
-
-        LCD_DispBatVolt();
-    }
-    // if (!(is_paired)) {
-    //     //Serial.println("Showing Pairing Message");
-    //     LCD_Pairing_Message();
-    // }
-
-    if (Warn_User_WiFi_Will_Be_Init && !WiFi_Is_Initializing){
-        LCD_Warn_WiFi_Message();
-    }
-    else if (WiFi_Is_Initializing) {
-        LCD_WiFi_Initializing_Message();
-    }
-
-
-    //LCD_DispAngle();
-
-    //Serial.println("LCD_Status_Message()");
-    LCD_Status_Message();
-
-
-
-   
-   // LCD_print_JoyC_Debug();
-
-    //Serial.println("pushSprite()");
-    canvas.pushSprite(0, 0);
-}
-
-void LCD_Print_Counter(){
-    canvas.setTextFont(1);
-    canvas.setTextSize(1);
-    
-    //define the status box UI variables
-    const int COUNTER_M_X = 0;
-    const int COUNTER_M_Y = 0;
-    const int COUNTER_M_W = 140;
-    const int COUNTER_M_H = 40;
-    const int COUNTER_M_R = 10;
-
-
-    const int COUNTER_M_COLOR = WHITE;
-    int COUNTER_M_TEXT_COLOR = invertColor16(COUNTER_M_COLOR);
-
-
-    canvas.fillRoundRect(COUNTER_M_X, COUNTER_M_Y,
-     COUNTER_M_W, COUNTER_M_H, COUNTER_M_R, COUNTER_M_COLOR);
-    
-    canvas.setTextColor(COUNTER_M_TEXT_COLOR);
-
-    // canvas.setCursor(COUNTER_M_X+100, COUNTER_M_Y+2);
-    // canvas.print(counter);
-    
-    
-    // canvas.setCursor(COUNTER_M_X+40, COUNTER_M_Y+2);
-    // canvas.print("us");
-    // canvas.setCursor(COUNTER_M_X+55, COUNTER_M_Y+2);
-    // canvas.print(RealTcode_execution_time);
-
-    //print CPU load
-
-    canvas.setCursor(COUNTER_M_X+30, COUNTER_M_Y+2);
-    canvas.print("CPU0:"+String(int(BackgroundTask_CPU_load))+"%"+ " CPU1:"+String(int(RealTcode_CPU_load))+"%");
-
-    
-    const int JoyCircle_X = 12;
-    const int JoyCircle_Y = 12;
-    const int JoyCircle_R = 10;
-    const int JoyCircle_IR = 3;
-    const int JoyCircle_OC = BLACK;
-
-    int JoyCircle_IC = BLACK;
-
-    if (JoyC_In_X_DeadZone && JoyC_In_y_DeadZone){
-        JoyCircle_IC = RED;
-    }
-    
-    float inner_JoyCircle_X = JoyCircle_X + (JoyC_X / 10) -5;
-    float inner_JoyCircle_Y = JoyCircle_Y - (JoyC_Y / 10) +5; // y is inverted
-
-    canvas.drawCircle(JoyCircle_X, JoyCircle_Y, JoyCircle_R, JoyCircle_OC);
-    canvas.fillCircle(inner_JoyCircle_X, inner_JoyCircle_Y, JoyCircle_IR, JoyCircle_IC);
-
-    canvas.setCursor(JoyCircle_X-8, JoyCircle_Y+18);
-    if (JoyC_In_X_DeadZone){
-        canvas.setTextColor(RED);
-    }
-    else{
-        canvas.setTextColor(BLACK);
-    }
-    canvas.print(JoyC_X);
-
-    canvas.setCursor(JoyCircle_X+6, JoyCircle_Y+18);
-    if (JoyC_In_y_DeadZone){
-        canvas.setTextColor(RED);
-    }
-    else{
-        canvas.setTextColor(BLACK);
-    }
-    canvas.print(JoyC_Y);
-
-
-    if(JoyC_X_left_right == -1){ // left
-
-        canvas.fillRect(JoyCircle_X-12, JoyCircle_Y-10, 4, 20, BLACK);
-        //canvas.drawRect(JoyCircle_X-12, JoyCircle_Y-10, JoyCircle_X-6, JoyCircle_Y+10, BLACK);
-        //canvas.drawLine(JoyCircle_X-10, JoyCircle_Y-10, JoyCircle_X-10, JoyCircle_Y+10, BLACK);
-    }
-
-    else if(JoyC_X_left_right == 1){ // right
-        canvas.fillRect(JoyCircle_X+9, JoyCircle_Y-10, 4, 20, BLACK);
-        //canvas.drawRect(JoyCircle_X+6, JoyCircle_Y-10, JoyCircle_X+12, JoyCircle_Y+10, BLACK);
-        //canvas.drawLine(JoyCircle_X+10, JoyCircle_Y-10, JoyCircle_X+10, JoyCircle_Y+10, BLACK);
-    }
-
-
-    if(JoyC_Y_up_down == -1){   // down
-        canvas.fillRect(JoyCircle_X-10, JoyCircle_Y+10, 20, 4, BLACK);
-        //canvas.drawRect(JoyCircle_X-10, JoyCircle_Y-12, JoyCircle_X+10, JoyCircle_Y-6, BLACK);
-        //canvas.drawLine(JoyCircle_X-10, JoyCircle_Y-10, JoyCircle_X+10, JoyCircle_Y-10, BLACK);
-    }
-
-    else if(JoyC_Y_up_down == 1){   // up
-        canvas.fillRect(JoyCircle_X-9, JoyCircle_Y-12, 20, 4, BLACK);
-        //canvas.drawRect(JoyCircle_X-10, JoyCircle_Y+6, JoyCircle_X+10, JoyCircle_Y+12, BLACK);
-        //canvas.drawLine(JoyCircle_X-10, JoyCircle_Y+10, JoyCircle_X+10, JoyCircle_Y+10, BLACK);
-    }
-
-
-
-
-}
 
 
 
@@ -205,18 +38,66 @@ void LCD_IMU_Message(void){
     canvas.print("Robot Flat");
 }
 
+#include "utility/qrcode.h"
+void print_qr_code(const char *string, uint16_t x, uint16_t y, uint8_t width, uint8_t version){
+     
+  // Create the QR code
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(version)];
+  qrcode_initText(&qrcode, qrcodeData, version, 0, string);
+  
+  // Top quiet zone
+  uint8_t thickness = width / qrcode.size;
+  uint16_t lineLength = qrcode.size * thickness;
+  uint8_t xOffset = x + (width-lineLength)/2;
+  uint8_t yOffset = y + (width-lineLength)/2;
+  canvas.fillRect(x, y, width, width, TFT_WHITE);
+
+  for (uint8_t y = 0; y < qrcode.size; y++) {
+    for (uint8_t x = 0; x < qrcode.size; x++) {
+      uint8_t q = qrcode_getModule(&qrcode, x, y);
+      if (q) canvas.fillRect(x * thickness + xOffset, y * thickness + yOffset, thickness, thickness, TFT_BLACK);
+    }
+  }
+}
+
 void LCD_Felg_Message(void){
-    canvas.setTextFont(2);
+    canvas.setTextFont(1);
     canvas.setTextSize(1);
 
-    canvas.setCursor(LCD_FELG_SM_X+5, LCD_FELG_SM_Y);
+    canvas.setCursor(LCD_FELG_SM_X, LCD_FELG_SM_Y-3);
+    canvas.print(Remote_Name);
+
+    canvas.setCursor(LCD_FELG_SM_X+5, LCD_FELG_SM_Y+9);
     canvas.print("Designed By");
 
-    canvas.setCursor(LCD_FELG_SM_X, LCD_FELG_SM_Y + 15);
+    canvas.setCursor(LCD_FELG_SM_X, LCD_FELG_SM_Y +18);
     canvas.print("Felipe Galindo");
 
-    canvas.setCursor(LCD_FELG_SM_X+3, LCD_FELG_SM_Y + 30);
+    canvas.setCursor(LCD_FELG_SM_X+3, LCD_FELG_SM_Y +27);
     canvas.print("in Minnesota");
+
+    //print QR code
+
+    print_qr_code("z.umn.edu/MARIN_remote", 17, 65, 100, 6);
+    
+
+    //bad, uses M5.Lcd, which is not the canvas
+    //M5.Lcd.qrcode("www.github.com/felipegalindo", 50, 50, 50, 6);
+
+
+    //draw white round rect and then print link
+    canvas.fillRoundRect(0, 160, 135, 10, 3, TFT_WHITE);
+    // canvas.fillRoundRect(0, 0, 135, 240, 10, TFT_WHITE);
+    canvas.setCursor(2, 160);
+    canvas.setTextFont(1);
+    canvas.setTextSize(1);
+    canvas.setTextColor(TFT_BLACK);
+    canvas.print("z.umn.edu/MARIN_remote");
+
+
+    // push the sprite to the screen
+    canvas.pushSprite(0, 0);
 }
 
 void LCD_calib1_Message(void){
@@ -290,45 +171,46 @@ void LCD_UI_Setup(){
     canvas.setTextSize(1);
     canvas.setTextColor(WHITE);
 
-    canvas.setCursor(SM_X, SM_Y);
-    canvas.print("Starting Systems");
+    // canvas.setCursor(SM_X, SM_Y);
+    // canvas.print("Starting Systems");
 
-    LCD_CORE_Message();
+    //LCD_CORE_Message();
 
-    LCD_IMU_Message();
 
     LCD_Felg_Message();
 
-    LCD_flush();
+    //LCD_flush();
+
+    // wait for 2 seconds
+    //delay(2000);
 }
 
-void LCD_DispBatVolt() {
 
-    const int LCD_BTv_X = 0;
-    const int LCD_BTv_Y = 41; //220
+
+
+
+void LCD_DispBatVolt(int LCD_BTv_X = 0, int LCD_BTv_Y = 217, int bt_percent = -1, boolean bt_charging = false){
+
     const int LCD_BTv_W = 35;
     const int LCD_BTv_H = 13;
     const int LCD_BTv_R = 5;
     
     int LCD_BTv_C = TFT_LIGHTGREY;
 
-    if(isCharging && perCentBatt > 80){
-        LCD_BTv_C = PURPLE;
+    if(bt_percent > 80){
+        LCD_BTv_C = GREEN;
     }
-    else if(isCharging){
+    else if(bt_charging){
         LCD_BTv_C = BLUE;
     }
-    else if (perCentBatt == -1){
+    else if (bt_percent == -1){
         LCD_BTv_C = TFT_LIGHTGREY;
     }
-    else if (perCentBatt < 20){
+    else if (bt_percent < 20){
         LCD_BTv_C = RED;
     }
-    else if(perCentBatt < 40){
+    else if(bt_percent < 40){
         LCD_BTv_C = YELLOW;
-    }
-    else if(perCentBatt > 70){
-        LCD_BTv_C = GREEN;
     }
 
     canvas.setTextFont(1);
@@ -343,28 +225,30 @@ void LCD_DispBatVolt() {
 
     String text = "";
 
-    if (perCentBatt <= -1){
+    if (bt_percent <= -1){
         text = " ... ";
     }
-    else if (perCentBatt == 100){
-        text = String(perCentBatt) + "%";
+    else if (bt_percent == 100){
+        text = String(bt_percent) + "%";
     }
         
     else{
-        text = " " + String(perCentBatt) + "%";
+        text = " " + String(bt_percent) + "%";
     }
 
 
         
-    
 
     //canvas.printf("%4.2fv ", vBatt);
     canvas.setTextColor(BLACK);
     canvas.print(text);
     //canvas.printf("%1.2fv ", vBatt);
-    //canvas.printf("%1.0fv ", perCentBatt);
+    //canvas.printf("%1.0fv ", bt_percent);
 
 }
+
+
+
 
 void LCD_DispAngle() {
     canvas.setTextFont(6);
@@ -439,7 +323,49 @@ void LCD_Resume_from_Abort_Message(){
     LCD_IMU_Message();
 }
 
+void LCD_WiFi_Scanning_Message(){
+    initMSG_has_been_flushed = false;
+    canvas.setTextFont(2);
+    canvas.setTextSize(1);
+    canvas.setTextColor(BLACK);
 
+    const int WARN_WiFi_INIT_M_X = 5;
+    const int WARN_WiFi_INIT_M_Y = 5;
+    const int WARN_WiFi_INIT_M_W = 125;
+    const int WARN_WiFi_INIT_M_H = 55;
+    const int WARN_WiFi_INIT_M_R = 5;
+
+    const int WARN_WiFi_INIT_M_S_H = 20;
+    const int WARN_WiFi_INIT_M_S_W = 60;
+
+    const int WARN_WiFi_INIT_M_S = WARN_WiFi_INIT_M_X+5 + (Warn_User_WiFi_Will_Be_Init_Selector_Abort * (WARN_WiFi_INIT_M_S_W-5));
+
+
+    canvas.fillRoundRect(WARN_WiFi_INIT_M_X, WARN_WiFi_INIT_M_Y,
+        WARN_WiFi_INIT_M_W, WARN_WiFi_INIT_M_H, WARN_WiFi_INIT_M_R, WHITE);
+
+    canvas.setCursor(WARN_WiFi_INIT_M_X+5, WARN_WiFi_INIT_M_Y);
+    canvas.print("Scanning");
+
+    canvas.setCursor(WARN_WiFi_INIT_M_X+5, WARN_WiFi_INIT_M_Y + 15);
+    canvas.print("WiFi");
+    //canvas.print(" " + String(10-(Warn_User_WiFi_Will_Be_Init/10)) + "s");
+    
+
+
+    // canvas.fillRoundRect(WARN_WiFi_INIT_M_S, WARN_WiFi_INIT_M_Y+30,
+    //     WARN_WiFi_INIT_M_S_W, WARN_WiFi_INIT_M_S_H, WARN_WiFi_INIT_M_R, TFT_LIGHTGREY);
+
+
+    // canvas.setCursor(WARN_WiFi_INIT_M_X+10, WARN_WiFi_INIT_M_Y+32);
+    // canvas.print("Start      Abort");
+
+
+
+    // canvas.setTextColor(WHITE);
+
+    //canvas.fillTriangle
+}
 
 void LCD_WiFi_Initializing_Message(){
     canvas.setTextFont(2);
@@ -447,7 +373,7 @@ void LCD_WiFi_Initializing_Message(){
     canvas.setTextColor(BLACK);
 
     const int WARN_WiFi_INIT_M_X = 5;
-    const int WARN_WiFi_INIT_M_Y = 150;
+    const int WARN_WiFi_INIT_M_Y = 5;
     const int WARN_WiFi_INIT_M_W = 125;
     const int WARN_WiFi_INIT_M_H = 55;
     const int WARN_WiFi_INIT_M_R = 5;
@@ -491,7 +417,7 @@ void LCD_Warn_WiFi_Message(){
     canvas.setTextColor(BLACK);
 
     const int WARN_WiFi_INIT_M_X = 5;
-    const int WARN_WiFi_INIT_M_Y = 150;
+    const int WARN_WiFi_INIT_M_Y = 5;
     const int WARN_WiFi_INIT_M_W = 125;
     const int WARN_WiFi_INIT_M_H = 55;
     const int WARN_WiFi_INIT_M_R = 5;
@@ -550,6 +476,42 @@ void LCD_Pairing_Message(){
     //canvas.fillTriangle
 }
 
+// void LCD_Status_Message(){
+
+//     String status_message = exec_status;
+
+//     // get the length of status_message
+//     //int status_message_length = status_message.length();
+
+//     canvas.setTextFont(1);
+//     canvas.setTextSize(1);
+//     //canvas.setTextColor(BLACK);
+    
+//     //define the status box UI variables
+//     const int STATUS_M_X = 0;
+//     const int STATUS_M_Y = 220;
+//     const int STATUS_M_W = 135;
+//     const int STATUS_M_H = 20;
+//     const int STATUS_M_R = 5;
+
+//     const int STATUS_M_COLOR = WHITE;
+//     int STATUS_M_TEXT_COLOR = invertColor16(STATUS_M_COLOR);
+//     //int STATUS_M_TEXT_COLOR = BLACK;
+
+
+
+//     // define color for the status box as white
+    
+
+//     canvas.fillRoundRect(STATUS_M_X, STATUS_M_Y,
+//      STATUS_M_W, STATUS_M_H, STATUS_M_R, STATUS_M_COLOR);
+    
+//     canvas.setTextColor(STATUS_M_TEXT_COLOR);
+    
+//     canvas.setCursor(STATUS_M_X, STATUS_M_Y+2);
+//     canvas.print(status_message);
+// }
+
 void LCD_Status_Message(){
 
     String status_message = exec_status;
@@ -563,13 +525,13 @@ void LCD_Status_Message(){
     
     //define the status box UI variables
     const int STATUS_M_X = 0;
-    const int STATUS_M_Y = 220;
+    const int STATUS_M_Y = 230;
     const int STATUS_M_W = 135;
-    const int STATUS_M_H = 20;
+    const int STATUS_M_H = 10;
     const int STATUS_M_R = 5;
 
-    const int STATUS_M_COLOR = WHITE;
-    int STATUS_M_TEXT_COLOR = invertColor16(STATUS_M_COLOR);
+    //int STATUS_M_COLOR = WHITE;
+    int STATUS_M_TEXT_COLOR = invertColor16(exec_status_color);
     //int STATUS_M_TEXT_COLOR = BLACK;
 
 
@@ -578,11 +540,11 @@ void LCD_Status_Message(){
     
 
     canvas.fillRoundRect(STATUS_M_X, STATUS_M_Y,
-     STATUS_M_W, STATUS_M_H, STATUS_M_R, STATUS_M_COLOR);
+     STATUS_M_W, STATUS_M_H, STATUS_M_R, exec_status_color);
     
     canvas.setTextColor(STATUS_M_TEXT_COLOR);
     
-    canvas.setCursor(STATUS_M_X, STATUS_M_Y+2);
+    canvas.setCursor(STATUS_M_X+2, STATUS_M_Y+1);
     canvas.print(status_message);
 }
 
@@ -639,3 +601,153 @@ void LCD_print_JoyC_Debug(){
 
     
 }
+
+
+// void LCD_CPU_Widget(int COUNTER_M_X = 35, int COUNTER_M_Y = 220,){
+//     canvas.setTextFont(1);
+//     canvas.setTextSize(1);
+    
+//     //define the status box UI variables
+//     const 
+//     const int COUNTER_M_W = 100;
+//     const int COUNTER_M_H = 10;
+//     const int COUNTER_M_R = 5;
+
+//     const int COUNTER_M_COLOR = WHITE;
+//     int COUNTER_M_TEXT_COLOR = invertColor16(COUNTER_M_COLOR);
+
+//     canvas.fillRoundRect(COUNTER_M_X, COUNTER_M_Y, COUNTER_M_W, COUNTER_M_H, COUNTER_M_R, COUNTER_M_COLOR);
+    
+//     canvas.setTextColor(COUNTER_M_TEXT_COLOR);
+
+//     canvas.setCursor(COUNTER_M_X+5, COUNTER_M_Y+2);
+//     canvas.print("CPU");
+
+
+//     canvas.setCursor(COUNTER_M_X+30, COUNTER_M_Y+2);
+
+//     String S_CPU_load = "0:"+String(int(BackgroundTask_CPU_load))+"%"+ " 1:";
+
+//     if (RealTcode_CPU_load < 10){
+//         S_CPU_load += "0";
+//     }
+    
+    
+//     S_CPU_load += String(int(RealTcode_CPU_load))+"%";
+    
+//     canvas.print(S_CPU_load);
+
+// }
+
+
+
+
+void LCD_CPU_Widget(int COUNTER_M_X, int COUNTER_M_Y, double bk_cpu_percent, double rt_cpu_load){
+    canvas.setTextFont(1);
+    canvas.setTextSize(1);
+    
+    //define the status box UI variables
+    const int COUNTER_M_W = 100;
+    const int COUNTER_M_H = 10;
+    const int COUNTER_M_R = 5;
+
+    const int COUNTER_M_COLOR = WHITE;
+    int COUNTER_M_TEXT_COLOR = invertColor16(COUNTER_M_COLOR);
+
+    canvas.fillRoundRect(COUNTER_M_X, COUNTER_M_Y, COUNTER_M_W, COUNTER_M_H, COUNTER_M_R, COUNTER_M_COLOR);
+    
+    canvas.setTextColor(COUNTER_M_TEXT_COLOR);
+
+    canvas.setCursor(COUNTER_M_X+7, COUNTER_M_Y+2);
+    canvas.print("CPU");
+
+
+    canvas.setCursor(COUNTER_M_X+29, COUNTER_M_Y+2);
+
+    String S_CPU_load = "0:"+String(int(bk_cpu_percent))+"%"+ " 1:";
+
+    if (rt_cpu_load < 10){
+        S_CPU_load += "0";
+    }
+    
+    
+    S_CPU_load += String(int(rt_cpu_load))+"%";
+    
+    canvas.print(S_CPU_load);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Extract RGB components from RGB565
+auto extractRGB565 = [](uint16_t color, uint8_t &r, uint8_t &g, uint8_t &b) {
+    r = (color >> 11) & 0x1F;
+    g = (color >> 5) & 0x3F;
+    b = color & 0x1F;
+};
+
+// Function to mix two RGB565 colors based on a weight
+auto mixRGB565 = [](uint16_t color1, uint16_t color2, float weight, uint16_t &result) {
+    uint8_t r1, g1, b1, r2, g2, b2;
+    extractRGB565(color1, r1, g1, b1);
+    extractRGB565(color2, r2, g2, b2);
+
+    // Corrected: Cast to uint8_t after computing the blend, before applying the mask
+    uint8_t r = static_cast<uint8_t>(r1 * (1 - weight) + r2 * weight) & 0x1F;
+    uint8_t g = static_cast<uint8_t>(g1 * (1 - weight) + g2 * weight) & 0x3F;
+    uint8_t b = static_cast<uint8_t>(b1 * (1 - weight) + b2 * weight) & 0x1F;
+
+    result = (r << 11) | (g << 5) | b;
+};
+
+
+
+
+uint16_t interpolateColor(int value, int minRange, int midRange, int maxRange, uint16_t startColor, uint16_t midColor, uint16_t endColor) {
+
+    // make sure value is within range
+
+    if (value < minRange){
+        value = minRange;
+    }
+    else if (value > maxRange){
+        value = maxRange;
+    }
+
+
+    // Normalize value to 0-1
+    float normalized = 0;
+    uint16_t color = 0;
+    
+
+
+    if (value <= midRange) {
+        normalized = (float)(value - minRange) / (midRange - minRange);
+        mixRGB565(startColor, midColor, normalized, color);
+    } else {
+        normalized = (float)(value - midRange) / (maxRange - midRange);
+        mixRGB565(midColor, endColor, normalized, color);
+    }
+
+    return color;
+}
+
+
+
+
+
+
+
+// --- LCD.cpp ---

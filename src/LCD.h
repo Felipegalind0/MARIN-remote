@@ -1,12 +1,18 @@
 #ifndef __LCD_H
 #define __LCD_H
 
+#include <M5StickCPlus.h>
+#include "IO.h"
+#include "variables.h"
+#include "COMS.h"
+
+#include "Wireless.h"
 
 #define LCDV_MID 60
 
 
-#define SM_X 30
-#define SM_Y 170
+// #define SM_X 30
+// #define SM_Y 120
 
 
 #define Middle_M_X 35
@@ -22,7 +28,7 @@
 
 
 #define LCD_FELG_SM_X 40
-#define LCD_FELG_SM_Y 190
+#define LCD_FELG_SM_Y 180
 
 
 #define LCD_ANGLE_X 55
@@ -36,9 +42,12 @@
 #define ABORT_M_H 60
 #define ABORT_M_R 5
 
-void LCD_loop();
+extern TFT_eSprite canvas;
 
-void LCD_Print_Counter();
+
+void LCD_Print_RealT_Times();
+
+void LCD_Print_JoyC_widget();
 
 void LCD_flush();
 
@@ -53,7 +62,8 @@ void LCD_calib1_complete_Message(void);
 
 void LCD_calib2_Message(void);
 
-void LCD_DispBatVolt();
+// void LCD_DispBatVolt();
+void LCD_DispBatVolt(int LCD_BTv_X, int LCD_BTv_Y, int bt_percent, boolean bt_charging);
 void LCD_DispAngle();
 void LCD_Update_Mode();
 
@@ -68,12 +78,24 @@ void LCD_IMU_Message();
 
 void LCD_Pairing_Message();
 
+void LCD_WiFi_Scanning_Message();
+
 void LCD_Warn_WiFi_Message();
 
 void LCD_WiFi_Initializing_Message();
 
-uint16_t invertColor(uint16_t color);
+uint16_t invertColor16(uint16_t color);
 
 void LCD_Status_Message();
+
+void LCD_Print_JoyC_widget();
+
+// void LCD_CPU_Widget();
+void LCD_CPU_Widget(int LCD_CPU_X, int LCD_CPU_Y,  double bk_cpu_percent, double rt_cpu_load);
+
+void LCD_Western_Artificial_Horizon();
+
+uint16_t interpolateColor(int value, int minRange, int midRange, int maxRange, 
+                            uint16_t startColor, uint16_t midColor, uint16_t endColor);
 
 #endif

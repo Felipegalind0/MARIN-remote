@@ -2,16 +2,11 @@
 #include "LCD.h"
 #include <WebSerial.h>
 
+Preferences preferences;
 
-float vBatt, voltAve             = -1.0;
+uint8_t broadcastAddress[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // Array to store the MAC address
 
-float vBatt_min = 3.3, vBatt_max = 4.1;
 
-float deviceTemp = -1.0;
-
-int perCentBatt = -1;
-
-boolean isCharging = false;
 
 boolean debug_core0 = true;
 boolean debug_core1 = false;
@@ -22,32 +17,92 @@ boolean standing        = false;
 // boolean hasFallen       = false;
 boolean abortWasHandled = false;
 
-boolean is_paired = false;
+// boolean is_paired = false;
 boolean is_booted = false;
 
 boolean WiFi_connected = false;
 
+boolean WiFi_With_Remote_Name_Found = false;
+
 boolean robot_wifi_in_range = false;
+
+boolean robot_connected = false;
+
+
+
+byte WiFi_State = WIFI_NOT_INITIALIZED;
+
+byte Pairing_State = PAIRING_NOT_REQUESTED;
 
 //boolean Should_Init_WiFi = false;
 
-boolean WiFi_Is_Initialized = false;
+// boolean WiFi_Is_Initialized = false;
 
-boolean WiFi_Is_Initializing = false;
+// boolean WiFi_Is_Initializing = false;
+
+// boolean WiFi_Just_Finished_Initializing = false;
 
 byte Warn_User_WiFi_Will_Be_Init = 0;
 byte Warn_User_WiFi_Will_Be_Init_Threshold = 100;
 
 boolean Warn_User_WiFi_Will_Be_Init_Selector_Abort = 0;
 
+boolean menu_active = false;
+
+byte robot_state = UNKNOWN_ARMED_STATUS;
+
+// boolean robot_ARM_requested = false;
+// boolean robot_DISARM_requested = false;
+
+int g_menu_X_selector = 0;
+
+int menu_Y_selector = 0;
+
+
+String robot_msg = "";
+
+//-----------------Robot IMU Variables-----------------
+
+//orientation
+float robot_X_deg = 0.0, robot_Y_deg = 0.0, robot_Z_deg = 0.0;
+
+
+float Avg_IMU_X_deg_per_sec = 0.0, Avg_IMU_Y_deg_per_sec = 0.0, Avg_IMU_Z_deg_per_sec = 0.0;
+
+//-----------------Robot Motor Variables-----------------
+int Rmotor = 0, Lmotor = 0;
+boolean isArmed         = false;
+
+
+
+
+
+
+float deviceTemp = -1.0;
+
+
+//-----------------Battery Variables-----------------
+
+
+int perCentBatt = -1;
+int Robot_perCentBatt = -1;
+
+float vBatt, voltAve             = -1.0;
+
+float vBatt_min = 3.3, vBatt_max = 4.1;
+
+boolean isCharging = false;
+
+
 
 
 
 String exec_status = "OFF";
+int exec_status_color = WHITE;
 boolean exec_status_has_changed = false;
 
 
-
+//-----------------LCD Variables-----------------
 uint8_t lcd_brightness = 12;
 
 
@@ -82,20 +137,16 @@ int16_t motorLdir = 0, motorRdir = 0;  // 0:stop 1:+ -1:-
 
 int16_t punchPwr, punchPwr2, punchDur, punchCountL = 0, punchCountR = 0;
 
-uint32_t Joyc_X_min = 500, Joyc_X_center = 2000, Joyc_X_max = 3500, Joyc_Y_min = 500, Joyc_Y_center = 2000, Joyc_Y_max = 3500, JoyC_X_raw = 2000, JoyC_Y_raw = 2000, JoyC_X_raw_prev = 2000, JoyC_Y_raw_prev = 2000;
 
-byte JoyC_X_deadzone = 200, JoyC_Y_deadzone = 200;
-
-byte JoyC_X = 50, JoyC_Y = 50;
-
-byte JoyC_X_Cycles_In_Deadzone = 0, JoyC_Y_Cycles_In_Deadzone = 0;
 
 byte demoMode = 0;
 
 byte Abtn = 0;
 byte Bbtn = 0;
+byte Pbtn = 0;
 
-boolean pairRequested = false;
+// boolean pairRequested = false;
+// boolean pairFailed = false;
 
 
 
@@ -103,20 +154,41 @@ boolean pairRequested = false;
 
 
 //-----------------Joystick Variables-----------------
+
+uint32_t Joyc_X_raw_min = 500, Joyc_X_center = 2000, Joyc_X_max = 3500, Joyc_Y_raw_min = 500, Joyc_Y_center = 2000, Joyc_Y_raw_max = 3500, JoyC_X_raw = 2000, JoyC_Y_raw = 2000, JoyC_X_raw_prev = 2000, JoyC_Y_raw_prev = 2000;
+
+byte JoyC_X_deadzone = 200, JoyC_Y_deadzone = 200;
+
+byte JoyC_X = 50, JoyC_Y = 50;
+
+byte Robot_JoyC_X = 50, Robot_JoyC_Y = 50;
+
+float Robot_JoyC_r = 0, Robot_JoyC_Phi = 0;
+
+float JoyC_r = 0;
+
+float JoyC_Phi = 0;
+
+byte JoyC_X_Cycles_In_Deadzone = 0, JoyC_Y_Cycles_In_Deadzone = 0;
+
 boolean JoyC_In_X_DeadZone = true;
 boolean JoyC_In_y_DeadZone = true;
 
 int JoyC_X_left_right = 0;
 int JoyC_Y_up_down    = 0;
 
-boolean JoyC_left = false;
-boolean JoyC_right = false;
-boolean JoyC_up = false;
-boolean JoyC_down = false;
+boolean JoyC_btn = false;
+
+// boolean JoyC_left = false;
+// boolean JoyC_right = false;
+// boolean JoyC_up = false;
+// boolean JoyC_down = false;
 
 boolean JoyC_needs_to_return_to_center = false;
 
 boolean JoyC_Xinput = false;
+
+
 
 //-----------------Sleep Variables-----------------
 int sleep_enter_timer = 0;
@@ -131,10 +203,10 @@ boolean is_sleeping = false;
 int x = 0;  // Defines robot rotation rate    + = R     &   - = L
 int y = 0;  // Defines robot FWD/BACK         + = FWD   &   - = BACK
 
-
-Vector<Network> WiFi_Networks = {};
-
 int n_WiFi_Networks = 0;
+String g_menu_selected_WiFi = "-";
+
+boolean g_set_num_remote_too = true;
 
 
 
@@ -143,6 +215,12 @@ int64_t RealTcode_start_time = 0, RealTcode_end_time = 0, RealTcode_execution_ti
 int64_t BackgroundTask_execution_time_start = 0, BackgroundTask_execution_time_end = 0, BackgroundTask_execution_time = 0, BackgroundTask_total_execution_time = 0, BackgroundTask_no_execution_time = 0;
 
 double RealTcode_CPU_load = 0.0, BackgroundTask_CPU_load = 0.0;
+
+double Robot_RealTcode_CPU_load = 0.0, Robot_BackgroundTask_CPU_load = 0.0;
+
+boolean initMSG_has_been_flushed = false;
+
+
 
 
 void resetVar() {
@@ -181,12 +259,12 @@ void resetPara() {
 
 // -------Functions that should be run on second core-------
 
-// Update mode 
-void setMode(bool inc) {
-    if (inc) demoMode = ++demoMode % 2;
+// // Update mode 
+// void setMode(bool inc) {
+//     if (inc) demoMode = ++demoMode % 2;
 
-    LCD_Update_Mode();
-}
+//     LCD_Update_Mode();
+// }
 
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
 {
@@ -269,4 +347,16 @@ void updateBatVolt(){
     //isCharging = M5.Axp.GetBatChargeCurrent() > 0;
 
 
+}
+
+void setPairingState(byte state) {
+    Pairing_State = state;
+    Serial.println("Pairing_State = " + String(Pairing_State));
+}
+
+void update_status(String status, int color) {
+  exec_status = status;
+  exec_status_color = color;
+  exec_status_has_changed = true;
+  Serial.println("\n@update_status: " + status);
 }

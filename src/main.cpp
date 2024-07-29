@@ -112,71 +112,43 @@ long push (>1sec) of power button: switch mode between standig and demo(circle)
 
 */
 
-#include "systeminit.h"
+
 #include "IO.h"
 //#include "movement.h"
 #include "gyro.h"
 #include "variables.h"
 #include "LCD.h"
 #include "COMS.h"
-#include "Wireless.h"
-#include <Vector.h>
+
+//#include <Vector.h>
 #include <Wire.h>
-#include "JoyC.h"
-
-#include "esp_timer.h"
-
-#include <esp32-hal-cpu.h>
 
 
-TaskHandle_t Task0, Task1;
+// #include "esp_timer.h"
 
-SemaphoreHandle_t syncSemaphore;
+// #include <esp32-hal-cpu.h>
 
-void update_status(String status) {
-  exec_status = status;
-  exec_status_has_changed = true;
-  Serial.println("\n@update_status: " + status);
-}
+// #include "BackgroundTask.h"
 
-void dim_screen() {
-  M5.Axp.ScreenBreath(lcd_brightness-4);
-}
+#include "CPU_Scheduling.h"
 
-void un_dim_screen() {
-  M5.Axp.ScreenBreath(lcd_brightness);
-}
+#include "BackgroundTask.h"
 
-void enter_sleep() {
+#include "RealTcode.h"
 
-  Serial.println("@enter_sleep: ");
 
-  update_status("Sleeping");
 
-  dim_screen();
+// #include "CPU_Scheduling/CPU_Scheduling.h"
+// #include "CPU_Scheduling/exec_BackgroundTask.h"
 
-  is_sleeping = true;
-  sleep_exit_timer = 0;
-  sleep_enter_timer = 0;
 
-  // Set CPU Frequency to 80MHz
-  setCpuFrequencyMhz(80);
 
-}
 
-void exit_sleep() {
-  is_sleeping = false;
-  update_status("ON");
-  Serial.println("@exit_sleep: ON");
 
-  un_dim_screen();
 
-  sleep_exit_timer = 0;
-  sleep_enter_timer = 0;
 
-  setCpuFrequencyMhz(240);
-  Serial.println("@exit_sleep: CPU Frequency set to " + String(getCpuFrequencyMhz()));
-}
+
+
 
 // Setup Code
 void Movement_Setup() {
@@ -208,366 +180,10 @@ void Movement_Setup() {
 }
 
 
-boolean print_RealTcode_start_time = false;
 
-boolean print_Warn_User_WiFi_Will_Be_Init = false;
-void exec_RealTcode() {
 
-    // Serial.print("WiFi_Is_Initialized: ");
-    // Serial.print(WiFi_Is_Initialized);
-    // Serial.print(" Warn_User_WiFi_Will_Be_Init: ");
-    // Serial.print(Warn_User_WiFi_Will_Be_Init);
-    // Serial.print(" Warn_User_WiFi_Will_Be_Init_Threshold: ");
-    // Serial.println(Warn_User_WiFi_Will_Be_Init_Threshold);
-
-
-    if (!(is_booted)) { // If Device is not booted, run the setup code
-      
-      // Initialize web serial, I2C, LCD, speaker, microphone, and other systems
-      SysInit_Setup();
-
-      // Initialize movement systems, motors, gyro, etc.
-      // Movement_Setup();
-      return;
-    }
-
-    else if (is_booted) { // If Device is booted, run the main code
-    }
-
-    // If the device is not booted and threshold has not been reached, increase the counter so that the warning is displayed
-    if (!WiFi_Is_Initialized && Warn_User_WiFi_Will_Be_Init < Warn_User_WiFi_Will_Be_Init_Threshold)
-    {
-      Warn_User_WiFi_Will_Be_Init++;
-      //Warn_User_WiFi_Will_Be_Init = 1; // uncomment to disable warning timeout
-      
-      //enable JoyC_Xinput
-      JoyC_Xinput = true;
-
-      if (print_Warn_User_WiFi_Will_Be_Init){
-        Serial.print("Warn_User_WiFi_Will_Be_Init: ");
-        Serial.println(Warn_User_WiFi_Will_Be_Init);
-      }
-      
-    }
-    // if (WiFi_connected) {
-    //   //Serial.println("WiFi connected");
-    //   update_status("WiFi connected");
-    // }
-    // else {
-    //   //Serial.println("WiFi not connected");
-    //   update_status("WiFi not connected");
-    // }
-
-
-
-    if (print_RealTcode_start_time){
-      Serial.println("\n@RealTcode: start_time = " + String(RealTcode_start_time));
-    }
-
-
-    
-
-
-    if (!(is_paired) && WiFi_Is_Initialized) {
-      pairRequested = true;
-    }
-
-    M5.update();
-
-
-    if(M5.BtnA.wasPressed()){
-      Serial.println("Button A was pressed");
-      Abtn = 1;
-    }
-    else {
-      Abtn = 0;
-    }
-
-    if(M5.BtnB.wasPressed()){
-      Serial.println("Button B was pressed");
-      Bbtn = 1;
-    }
-    else {
-      Bbtn = 0;
-    }
-
-    JoyC_loop();
-
-    LCD_loop();
-
-    // Serial.print("X_dz: ");
-    // Serial.print(JoyC_X_Cycles_In_Deadzone);
-    // Serial.print(" Y_dz: ");
-    // Serial.print(JoyC_Y_Cycles_In_Deadzone);
-    // Serial.print(" is_sleeping: ");
-    // Serial.print(is_sleeping);
-    // Serial.print(" sleep_enter_timer: ");
-    // Serial.print(sleep_enter_timer);
-    // Serial.print(" sleep_exit_timer: ");
-    // Serial.println(sleep_exit_timer);
-
-    if (is_sleeping){ // if sleeping, check if we should exit sleep mode
-      sleep_enter_timer = 0;
-
-      if ((JoyC_In_X_DeadZone) && (JoyC_In_y_DeadZone)){
-
-        sleep_exit_timer = 0;
-
-      }
-      else{
-
-        if (sleep_exit_timer > 10){
-          exit_sleep();
-          sleep_exit_timer = 0;
-        }
-        else{
-          sleep_exit_timer++;
-        }
-
-        
-      }
-
-      return;
-
-    }
-    else{ // if not sleeping, check if we should enter sleep mode
-
-      if ((JoyC_In_X_DeadZone) && (JoyC_In_y_DeadZone)){
-
-        if (sleep_enter_timer > 100){
-
-          enter_sleep();
-        }
-        else{
-          sleep_enter_timer++;
-        }
-
-      }
-      else{
-        sleep_enter_timer = 0;
-
-      }
-
-    }
-
-    //Movement_Loop(); // Call the movement loop for balancing and motion control
-
-    
-}
-
-
-// Function that contains code that needs to run in real-time
-void RealTcode( void * pvParameters ){ 
-  for(;;){ // Infinite loop for continuous execution
-
-    //RealTcode_no_execution_time_end = esp_timer_get_time(); // Record the end time of the loop
-
-    //RealTcode_start_time = micros(); // Record the start time of the loop
-    RealTcode_start_time = esp_timer_get_time();; // Record the start time of the loop
-
-    RealTcode_no_execution_time = RealTcode_start_time - RealTcode_end_time; // Calculate the time not spent executing the loop
-
-
-    // Execute the real-time code
-    exec_RealTcode();
-
-    yield(); // Yield the processor to other tasks
-
-    //RealTcode_end_time = micros(); // Record the end time of the loop
-    RealTcode_end_time = esp_timer_get_time(); // Record the end time of the loop
-
-    //Serial.print("@RealTcode: end_time = ");
-    //Serial.println(RealTcode_end_time);
-
-    // Calculate the time taken to execute the loop
-    RealTcode_execution_time = RealTcode_end_time - RealTcode_start_time;
-
-    //Serial.print("@RealTcode: Execution time = ");
-    //Serial.println(RealTcode_execution_time);
-    //Serial.println();
-
-    counter += 1; // Increment the counter variable by 1 each iteration
-    
-
-    //RealTcode_no_execution_time_start = esp_timer_get_time(); // Record the start time of the loop
-
-    // Give the semaphore to allow background tasks to run
-    xSemaphoreGive(syncSemaphore);
-
-
-    // Delay the task for a specific interval (in milliseconds) to control execution frequency
-    vTaskDelay(pdMS_TO_TICKS(interval));
-
-    //RealTcode_no_execution_time = RealTcode_no_execution_time_end - RealTcode_no_execution_time_start; // Calculate the time not spent executing the loop
-
-    RealTcode_total_execution_time = RealTcode_execution_time + RealTcode_no_execution_time;
-
-    if (RealTcode_total_execution_time != 0 && RealTcode_execution_time != 0) {
-
-      // Calculate the CPU load
-      RealTcode_CPU_load = (RealTcode_execution_time * 100/ RealTcode_total_execution_time);
-
-      // Serial.print("@RealTcode_no_execution_time_start: ");
-      // Serial.print(RealTcode_no_execution_time_start);
-      // Serial.print(" @RealTcode_no_execution_time_end: ");
-      // Serial.print(RealTcode_no_execution_time_end);
-
-      // Serial.print("@RealTcode_no_execution_time: "); 
-      // Serial.print(RealTcode_no_execution_time);
-      // Serial.print(" @RealTcode_total_execution_time: ");
-      // Serial.print(RealTcode_total_execution_time);
-      // Serial.print(" @RealTcode_execution_time: ");
-      // Serial.print(RealTcode_execution_time);
-      // Serial.print(" @RealTcode: CPU load = ");
-      // Serial.println(RealTcode_CPU_load);
-
-    }
-    
-  }
-}
-
-// takes in a ptr to a vector of WiFi_Networks and prints the ssid, MAC, and rssi of each network
-// void print_WiFi_Networks() {
-
-//   Vector<Network> networks_found = WiFi_Networks;
-
-
-
-//   if(n_WiFi_Networks == 0){
-//     Serial.println("No networks found");
-//     return;
-//   }
-//   else{
-//     Serial.println("Found " + String(n_WiFi_Networks) + " networks");
-//     // for (int i = 0; i < n_WiFi_Networks; ++i) {
-//     //   Serial.print("Network: ");
-//     //   Serial.print(WiFi_Networks[i].ssid);
-
-//     //   Serial.print(" MAC: ");
-//     //   Serial.print(WiFi_Networks[i].mac);
-
-//     //   Serial.print(" rssi: ");
-//     //   Serial.println(WiFi_Networks[i].rssi);
-//     // }
-//     for (int i = 0; i < n_WiFi_Networks; i++) { // Loop through each network
-//       Serial.print("Network: ");
-//       Serial.println(networks_found[i].ssid);
-//     }
-//   }
-// }
-
-
-void exec_BackgroundTask() {
-  if ((xSemaphoreTake(syncSemaphore, portMAX_DELAY) == pdTRUE) && (is_booted)) {
-    //Serial.print("@BackgroundTask: ");
-
-    // // 
-    // if ((counter % btnCounter) == 0) {
-    //   Serial.print("Checking buttons");
-    //   CheckButtons();
-    // }
-
-    // 
-    // if (counter % logCounter == 0) {
-    //   if (serialMonitor) {
-    //     Serial.print("Logging data");
-    //     sendStatus();
-    //     logData();
-    //   }
-    // }
-
-    if (Warn_User_WiFi_Will_Be_Init >= Warn_User_WiFi_Will_Be_Init_Threshold) {
-
-      WiFi_Is_Initializing = true;
-      
-      Warn_User_WiFi_Will_Be_Init = 0;  
-      Serial.println("\nWireless_Setup()");
-      digitalWrite(LED, HIGH);
-      Wireless_Setup();
-
-      Serial.println("\nWireless_Setup() DONE \n");
-      
-      digitalWrite(LED, LOW);
-
-      WiFi_Is_Initialized = true;
-    }
-
-    if (pairRequested){
-
-      Serial.println("@RealTcode: is_paired = false; Starting pairing process");
-      // Check for pairing
-      update_status("Scanning WiFi");
-
-      get_ssids();
-
-      //print_WiFi_Networks();
-
-      Serial.println("@RealTcode: Pairing process complete; is_paired = true");
-      update_status("Pairing DONE");
-      is_paired = true;
-      pairRequested = false;
-      return;
-    }
-
-    
-
-    //Serial.println("Updating LCD");
-    // Update the LCD display
-    //Serial.println("@exec_BackgroundTask: DONE");
-  }
-
-}
-
-
-
-void BackgroundTask( void * pvParameters ) {
-  for (;;) {  // Infinite loop for background task
-
-
-    BackgroundTask_execution_time_start = esp_timer_get_time(); // Record the start time of the loop
-
-    BackgroundTask_no_execution_time = BackgroundTask_execution_time_start - BackgroundTask_execution_time_end; // Calculate the time not spent executing the loop
-
-    yield(); // Yield the processor to other tasks
-    // Wait for the syncSemaphore to be given by the RealTcode task
-
-    exec_BackgroundTask(); // Execute the background task
-
-    // Record the end time of the loop
-    BackgroundTask_execution_time_end = esp_timer_get_time();
-
-    // Calculate the time taken to execute the loop
-    BackgroundTask_execution_time = BackgroundTask_execution_time_end - BackgroundTask_execution_time_start;
-
-    // Calculate the total execution time and CPU load
-    BackgroundTask_total_execution_time = BackgroundTask_execution_time + BackgroundTask_no_execution_time;
-
-    if (BackgroundTask_total_execution_time != 0 && BackgroundTask_execution_time != 0) {
-
-      // Calculate the CPU load
-      BackgroundTask_CPU_load = (BackgroundTask_execution_time * 100/ BackgroundTask_total_execution_time);
-
-      // Serial.print("@BackgroundTask_no_execution_time_start: ");
-      // Serial.print(BackgroundTask_no_execution_time_start);
-      // Serial.print(" @BackgroundTask_no_execution_time_end: ");
-      // Serial.print(BackgroundTask_no_execution_time_end);
-
-      // Serial.print("@BackgroundTask_no_execution_time: "); 
-      // Serial.print(BackgroundTask_no_execution_time);
-      // Serial.print(" @BackgroundTask_total_execution_time: ");
-      // Serial.print(BackgroundTask_total_execution_time);
-      // Serial.print(" @BackgroundTask_execution_time: ");
-      // Serial.print(BackgroundTask_execution_time);
-      // Serial.print(" @BackgroundTask: CPU load = ");
-      // Serial.println(BackgroundTask_CPU_load);
-
-    }
-
-    vTaskDelay(pdMS_TO_TICKS(interval)); // Delay the task for a specific interval (in milliseconds) to control execution frequency  
-  }
-}
-
-
+#define RealTcore 1
+#define BackgroundCore 0
 
 void setup() {
  

@@ -1,39 +1,30 @@
+// --- wireless.cpp ---
+#include "wireless.h" 
+#include "speaker.h"
+#include "JoyC.h"
 
-#include <Arduino.h>
-
-#include "creds.h"
-
-#include "variables.h"
-
-#include <esp_now.h>
-
-#include <ESPmDNS.h>
-
-#if defined(ESP8266)
-  #include <ESP8266WiFi.h>
-  #include <ESPAsyncTCP.h>
-#elif defined(ESP32)
-  #include <WiFi.h>
-  #include <AsyncTCP.h>
-#endif
-
-#include <ESPAsyncWebServer.h>
-#include <WebSerial.h>
-#include <Vector.h>
-
+#define msg_str_len 64
 // Structure example to receive data
 // Must match the sender structure
 typedef struct struct_message {
-    char a[7];
+    byte i;
+    char a[msg_str_len];
 } struct_message;
+
+typedef struct struct_message_s {
+    byte i;
+    char a[msg_str_len];
+} struct_message_r;
 
 AsyncWebServer server(80);
 
 // Create a struct_message called myData
 struct_message myData;
+struct_message_r RmyData;
 
 /* Message callback of WebSerial */
-void recvMsg(uint8_t *data, size_t len){
+void WebSerialrecvMsg(uint8_t *data, size_t len){
+  RED_LED(1);
   //WebSerial.println("Received Data...");
 
   String d = "";
@@ -41,7 +32,8 @@ void recvMsg(uint8_t *data, size_t len){
     d += char(data[i]);
   }
   
-  //WebSerial.println(d);
+  Serial.println(d);
+  RED_LED(0);
 }
 
 // void processCharArray() {
@@ -71,8 +63,214 @@ void recvMsg(uint8_t *data, size_t len){
 //   Movement_UpdateMovement(y);
 // }
 
-void print_msg_from_mac_to_serial(const uint8_t * mac, const uint8_t *incomingData, int *len) {
-  Serial.print("\n\n'");
+
+
+
+
+# define command_index 0  // c
+
+
+# define x_sign_index 1   // + or -
+
+# define isArmed_sign_index 1  // 1 or 0
+# define isArmed_index 2  // 1 or 0
+
+# define perCentBatt_p10_index 3    // 0-9
+# define perCentBatt_p1_index 4     // 0-9
+
+
+
+
+# define x_p10_index 2    // 0-9
+# define x_p1_index 3     // 0-9
+
+
+# define y_sign_index 4   // + or -
+
+# define y_p10_index 5    // 0-9
+# define y_p1_index 6     // 0-9
+
+# define roll_sign_index 7   // + or -
+
+# define roll_p100_index 8    // 0-9
+# define roll_p10_index 9    // 0-9
+# define roll_p1_index 10     // 0-9
+
+# define pitch_sign_index 11   // + or -
+
+# define pitch_p100_index 12   // 0-9
+# define pitch_p10_index 13    // 0-9
+# define pitch_p1_index 14     // 0-9
+
+# define Lmotor_sign_index 15   // + or -
+
+# define Lmotor_p100_index 16   // 0-9
+# define Lmotor_p10_index 17    // 0-9
+# define Lmotor_p1_index 18     // 0-9
+
+# define Rmotor_sign_index 19   // + or -
+
+# define Rmotor_p100_index 20   // 0-9
+# define Rmotor_p10_index 21    // 0-9
+# define Rmotor_p1_index 22     // 0-9
+
+
+# define Background_CPU_sign_index 23   // + or -
+
+# define Background_CPU_p10_index 24   // 0-9
+# define Background_CPU_p1_index 25    // 0-9
+
+
+# define RealT_CPU_CPU_sign_index 26   // + or -
+
+# define RealT_CPU_CPU_p10_index 27   // 0-9
+# define RealT_CPU_CPU_p1_index 28    // 0-9
+
+
+
+// # define RealT_CPU_CPU_sign_index 23   // + or -
+
+// # define RealT_CPU_CPU_p10_index 24   // 0-9
+// # define RealT_CPU_CPU_p1_index 25    // 0-9
+
+// # define Background_CPU_sign_index 26   // + or -
+
+// # define Background_CPU_p10_index 27   // 0-9
+// # define Background_CPU_p1_index 28    // 0-9
+
+
+
+String msg_str = "";
+
+void processCharArray() {
+
+  msg_str = robot_msg;
+
+  if(robot_msg == "ARMED") {
+      robot_state = ROBOT_ARMED;
+      // isArmed = true;
+      // robot_ARM_requested = false;
+      return;
+  }
+
+  else if (robot_state == ROBOT_ARMING){
+      Serial.println("ERROR: ARM request failed");
+  }
+
+
+  else if(robot_msg == "DISARMED") {
+      robot_state = ROBOT_DISARMED;
+      //isArmed = false;
+      //robot_DISARM_requested = false;
+      return;
+  }
+
+  else if (robot_state == ROBOT_DISARMING){
+      Serial.println("ERROR: DISARM request failed");
+  }
+
+  else if(robot_msg == "TAKING_OFF") {
+      robot_state = TAKING_OFF;
+      return;
+
+  }
+
+  else if(robot_state == TAKEOFF_REQUESTED) {
+      Serial.println("ERROR: Takeoff request failed");
+  }
+
+
+  /*EXAMPLE DATA:
+  //SPACES ADDED FOR CLARITY
+
+  'c' commands; includes info that needs to be updated quickly like joystick and IMU data
+  c       +50+50+000+060+000+000+74+11
+  c+50+50+007+029+000+000+73+11
+
+
+  's' commands; includes info that needs to be updated slowly like armedStatus, batteryPerCent 
+  only send every 100th msg
+  s +0+07 +50+50+000+060+000+000+73+11 
+  s+0+89+50+50+007+029+000+000+73+12
+
+
+  s+0+89+50+50+007+029+000+000+73+12
+  c9+50+50+007+029+000+000+73+12
+  c+50+50+007+029+000+000+74+11
+    
+  */
+
+  if (robot_msg[command_index] == 's') {
+
+    //decode isArmed
+    isArmed = (msg_str[isArmed_index] == '1') ? true : false;
+
+    //decode perCentBatt
+      perCentBatt = (msg_str[perCentBatt_p10_index] - '0') * 10 + (msg_str[perCentBatt_p1_index] - '0');
+
+    //set msg_str to 'c' + the rest of the string so that the rest of the data can be processed
+    msg_str = "c" + robot_msg.substring(perCentBatt_p1_index + 2, msg_str_len);
+
+    // print the updated msg_str
+
+    Serial.print("msg_str: " + msg_str);
+  }
+    
+  if (msg_str[command_index] == 'c') {
+    
+    // Process the first 2 chars to get the sign of the X value
+    Robot_JoyC_X = (msg_str[x_p10_index]- '0') * 10 + (msg_str[x_p1_index] - '0');  
+
+    // Process the following 2 chars to get the sign of the Y value
+    Robot_JoyC_Y = (msg_str[y_p10_index] - '0') * 10 + (msg_str[y_p1_index] - '0');
+
+    //Avg_IMU_Z_deg_per_sec = (msg_str[8] - '0') * 100;
+    Avg_IMU_Z_deg_per_sec = ((msg_str[roll_p100_index] - '0') * 100 + (msg_str[roll_p10_index] - '0') * 10 + (msg_str[roll_p1_index] - '0')) * ((msg_str[roll_sign_index] == '-') ? -1 : 1);
+
+    robot_Y_deg = ((msg_str[pitch_p100_index] - '0') * 100 + (msg_str[pitch_p10_index] - '0') * 10 + (msg_str[pitch_p1_index] - '0')) * ((msg_str[pitch_sign_index] == '-') ? -1 : 1);
+
+    Lmotor = ((msg_str[Lmotor_p100_index] - '0') * 100 + (msg_str[Lmotor_p10_index] - '0') * 10 + (msg_str[Lmotor_p1_index] - '0')) * ((msg_str[Lmotor_sign_index] == '-') ? -1 : 1);
+
+    Rmotor = ((msg_str[Rmotor_p100_index] - '0') * 100 + (msg_str[Rmotor_p10_index] - '0') * 10 + (msg_str[Rmotor_p1_index] - '0')) * ((msg_str[Rmotor_sign_index] == '-') ? -1 : 1);
+
+    Robot_RealTcode_CPU_load = ((msg_str[RealT_CPU_CPU_p10_index] - '0') * 10 + (msg_str[RealT_CPU_CPU_p1_index] - '0'));
+
+    Robot_BackgroundTask_CPU_load = ((msg_str[Background_CPU_p10_index] - '0') * 10 + (msg_str[Background_CPU_p1_index] - '0'));
+    
+    
+    cartesianToPolar(&Robot_JoyC_X, &Robot_JoyC_Y, &Robot_JoyC_r, &Robot_JoyC_Phi);
+
+    // Serial.print("X: ");
+    // Serial.print(Robot_JoyC_X); 
+    // Serial.print("    Y: ");
+    // Serial.print(Robot_JoyC_Y);
+    // Serial.print("    R: ");
+    // Serial.print(Avg_IMU_Z_deg_per_sec);
+    // Serial.print("    P: ");
+    // Serial.print(robot_Y_deg);
+    // Serial.print("    L: ");
+    // Serial.print(Lmotor);
+    // Serial.print("    R: ");
+    // Serial.print(Rmotor);
+
+    Serial.println();
+
+  }
+  
+}
+
+
+
+
+void print_msg_from_mac_to_serial(const uint8_t * mac, String robot_msg, int *len) {
+
+
+  byte str_len = robot_msg.substring(0, robot_msg.indexOf('\0')).length();
+
+
+
+
+  //Serial.print("\n\n'");
   // print the incoming mac address
   Serial.print(mac[0], HEX);
   Serial.print(":");
@@ -86,26 +284,56 @@ void print_msg_from_mac_to_serial(const uint8_t * mac, const uint8_t *incomingDa
   Serial.print(":");
   Serial.print(mac[5], HEX);
   Serial.print("' sent(");
-  Serial.print(*len); // dereference the 'len' ptr to get the lenght of the incoming data
-  Serial.println("): ");
-  for (int i = 0; i < *len; i++) { // loop through the incoming data
-    Serial.print(char(incomingData[i]));
-    Serial.print(" ");
-  }
+  Serial.print(str_len);
+  //Serial.print(*len); // dereference the 'len' ptr to get the lenght of the incoming data
+  Serial.print("/"+String(msg_str_len));
+  Serial.print("): ");
+
+
+  // print the incoming data to the serial monitor
+  Serial.print(robot_msg.substring(0, str_len));
+
+
+
+  // for (int i = 0; i < *len; i++) { // loop through the incoming data
+    
+  //   //Serial.print(" ");
+  //   Serial.print(char(incomingData[i])); // print each char of the incoming data
+
+  //   //check if end of str 
+  //   if (incomingData[i] == '\0') {
+  //     break;
+  //   }
+  // }
+
+
+  Serial.println();
+  Serial.println("\n\n");
+
+  
+  
 
 }
 
 // callback function that will be executed when data is received
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
 
-  //memcpy(&myData, incomingData, sizeof(myData));
+  RED_LED(1);
+
+  // print the incoming data to the serial monitor
+  //print_msg_from_mac_to_serial(mac, incomingData, &len);
+
+
+  
+
+  memcpy(&RmyData, incomingData, sizeof(RmyData));
+
+  robot_msg = RmyData.a;
 
   // Serial.print("Bytes received: ");
   // Serial.println(len);
   // Serial.print("Char: ");
   // Serial.println(myData.a);
-
-  //processCharArray(); // Call the function to process the received data
 
   // Serial.print("X: ");
   // Serial.print(x);
@@ -113,30 +341,75 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
   // Serial.println(y);
 
 
-  //print_msg_from_mac_to_serial(mac, incomingData, &len);
+  Serial.print("#" + String(RmyData.i) + "  ");
 
-  
+  print_msg_from_mac_to_serial(mac, robot_msg, &len);
+
+  processCharArray(); // Call the function to process the received data
+
+  RED_LED(0);
 }
 
 
-
+// Define RGB565 color values
 
 void Wireless_Setup(){
+//void Wireless_Setup( void * pvParameters ){
+
+    update_status("Wireless_Setup()", BLUE);
+
+    RED_LED(1);
+
+    // set_JoyC_LED_color(LIGHT_BLUE); // SETINGUP
+    // delay(1000);
+
+    // set_JoyC_LED_color(SKY_BLUE); // SETUP DONE
+    // delay(1000);
+
+    // set_JoyC_LED_color(DODGER_BLUE); 
+    // delay(1000);
+
+    // set_JoyC_LED_color(MEDIUM_BLUE);
+    // delay(1000);
+
+    // set_JoyC_LED_color(TFT_BLUE);  
+    // delay(1000);
+
+    // set_JoyC_LED_color(DEEP_SKY_BLUE); // CONNECTED 
+    // delay(1000);
+
+
+
+
+
+
+    set_JoyC_LED_color(LIGHT_BLUE);
+
+    //print the MAC address of the device
+    Serial.print("MAC Address: ");
+    Serial.println(WiFi.macAddress());
 
     WiFi.mode(WIFI_AP_STA); 
     WiFi.begin(ssid, password);
+
     if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-        Serial.printf("WiFi Failed!\n");
-        WiFi_connected = false;
+      WiFi.mode(WIFI_AP);
+      Serial.printf("WiFi Failed!\n");
+      update_status("WiFi Failed!", RED);
+      //WiFi_connected = false;
+      WiFi_State = WIFI_DISCONNECTED;
     }
     else {
-
-      WiFi_connected = true;
+      
+      //WiFi_connected = true;
+      WiFi_State = WIFI_CONNECTED;
+      set_JoyC_LED_color(SKY_BLUE);
   
       Serial.print("Connected to WiFi '");
       Serial.print(ssid);
       Serial.print("' with IP: ");
       Serial.println(WiFi.localIP());
+      update_status(String(ssid) + " Connected", BLUE);
       // WebSerial is accessible at "<IP Address>/webserial" in browser
 
     }
@@ -145,11 +418,12 @@ void Wireless_Setup(){
     Serial.print("Starting WiFI AP: ");
     Serial.println(Remote_Name);
 
-    Serial.print(" psswd: ");
-    Serial.println(AP_password);
+    // Serial.print(" psswd: ");
+    // Serial.println(AP_password);
 
     //WiFi.softAP(AP_ssid);
-    WiFi.softAP(Remote_Name, AP_password);
+    //WiFi.softAP(Remote_Name, AP_password);
+    WiFi.softAP(Remote_Name);
 
 
     if (!MDNS.begin(Remote_Name)) { // Start the mDNS responder for 
@@ -163,7 +437,7 @@ void Wireless_Setup(){
     Serial.println("Starting WebSerial...");  
     WebSerial.begin(&server);
     /* Attach Message Callback */
-    WebSerial.msgCallback(recvMsg);
+    WebSerial.msgCallback(WebSerialrecvMsg);
 
     server.begin();
 
@@ -182,14 +456,196 @@ void Wireless_Setup(){
     Serial.print("Registering Data Receive Callback");
     esp_now_register_recv_cb(OnDataRecv);
 
+
+   
+
+    //WiFi_Is_Initialized = true;
+    //WiFi_Is_Initializing = false;
+    WiFi_State = WIFI_INITIALIZED;
+    set_JoyC_LED_color(SKY_BLUE);
+
+    RED_LED(0);
+
     
 
+    return;
+}
 
+
+#define PRINT_SENT 1
+
+byte i_msg = 0;
+
+void sendData() {
+
+  i_msg++;
+
+  // Structure and data to send as before
+  struct_message myData;
+
+  String message = "";
+
+  // Create a string formatted as (+/-)XX(+/-)YY
+
+  if (menu_active){
+    return;
+  }
+  else if (robot_state == ROBOT_ARMING) {
+    message = "ARM";
+  }
+  else if (robot_state == ROBOT_DISARMING) {
+    message = "DISARM";
+  }
+  else if (robot_state == TAKEOFF_REQUESTED) {
+    message = "REQUEST_TAKEOFF";
+  }
+  else {
+    message += "c";
+
+    if (JoyC_X < 10) {
+      message += "+0";
+    }
+    else {
+      message += "+";
+    }
+
+    message += String(JoyC_X);
+
+    if (JoyC_Y < 10) {
+      message += "+0";
+    }
+    else {
+      message += "+";
+    }
+
+    message += String(JoyC_Y);
+
+  }
+
+  
+
+  
+  //strcpy(myData.a, (if (x < 0) ? "" : "+") + String(x) + (if (y < 0) ? "" : "+") + String(y));
+
+  // Move message to myData
+  message.toCharArray(myData.a, msg_str_len);
+
+  myData.i = i_msg;
+
+  // Send message via ESP-NOW
+  esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &myData, sizeof(myData));
+  
+  if (result == ESP_OK) {
+    #if PRINT_SENT
+    Serial.println("Sent with success, message: " + String(myData.a));
+    #endif
+  }
+  else {
+    Serial.println("Error sending the data");
+  }
+}
+
+
+
+
+
+void convertMacAddress(const String &macStr, uint8_t *macAddr) {
+    // Assumes macStr is in the format "XX:XX:XX:XX:XX:XX"
+    sscanf(macStr.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", 
+           &macAddr[0], &macAddr[1], &macAddr[2], &macAddr[3], &macAddr[4], &macAddr[5]);
+}
+
+
+
+
+void connectRobot(){
+  Serial.println("SUCCESS: Robot WiFi found :D Robot_ssid: " + Robot_ssid + " Robot_MAC: " + Robot_MAC + "\n");
+  // Convert Robot_MAC String to byte array
+  convertMacAddress(Robot_MAC, broadcastAddress);
+
+  
+  // Setup ESPNOW peer
+  esp_now_peer_info_t peerInfo;
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false;
+
+  // Add peer
+  if (esp_now_add_peer(&peerInfo) != ESP_OK){
+    Serial.println("Failed to add peer");
+    // Pairing_State = PAIRING_FAILED;
+    setPairingState(PAIRING_FAILED);
+    
+    return;
+  }
+
+  Serial.println("Peer added");
+
+  // is_paired = true;
+
+  robot_connected = true;
+  JoyC_Xinput = false; // switch Joystick to  Xinput off so the user sees Artifical Horizon on Robot uppon pairing
+
+  // Pairing_State = PAIRING_SUCCESSFUL;
+  setPairingState(PAIRING_SUCCESSFUL);
+  update_status("Robot WiFi found :D", BLUE);
+}
+
+
+byte robots_found = 0;
+String found_robot_ssid = "-";
+String found_robot_mac = "-";
+int found_robot_num = -1;
+int found_robot_ssid_num = -1;
+
+void checkAutoBind(){
+  if (robots_found == 1 && found_robot_num == Remote_Num) { 
+
+    if (Robot_MAC == "-") {
+      Robot_MAC = found_robot_mac;
+      Serial.println("\nRobot_MAC: " + Robot_MAC);
+    }
+
+    if (Robot_ssid == "-") {
+      Robot_ssid = found_robot_ssid;
+      Serial.println("Robot_ssid: " + Robot_ssid + "\n");
+    }
+
+  }
 }
 
 // returns dict(map) of SSIDs with ssid, MAC, and RSSI
 void get_ssids(){
+
+
+  robots_found = 0;
+  found_robot_mac = "-";
+  found_robot_ssid = "-";
+  found_robot_num = -1;
+  found_robot_ssid_num = -1;
+
+  xTaskCreatePinnedToCore(
+    Wireless_Sound, /* Task function. */
+    "Click_Sound", /* Name of the task */
+    10000,      /* Stack size in words */
+    NULL,       /* Task input parameter */
+    -2,          /* Priority of the task */
+    NULL,       /* Task handle. */
+    BackgroundCore);  /* Core where the task should run */
+
+
+
+  setPairingState(SCANNING_SSIDS);
+
+
+  Serial.println("@get_ssids(core#= " + String(xPortGetCoreID()) + ")");
+
+
+
+  robot_wifi_in_range = false;
   
+  yield();
+
   n_WiFi_Networks = WiFi.scanNetworks(); // Get the number of networks found
 
   Serial.println("\n-------------------------------------------------");
@@ -197,9 +653,13 @@ void get_ssids(){
   Serial.println("Found " + String(n_WiFi_Networks) + " networks\n");
 
 
+
+
   for (int i = 0; i < n_WiFi_Networks; i++) { // Loop through each network
 
-    robot_wifi_in_range = false;
+    yield();
+
+    
 
     // Network network;
     // network.ssid = WiFi.SSID(i);
@@ -214,11 +674,47 @@ void get_ssids(){
       Serial.println(String(WiFi.RSSI(i)) + " " + WiFi.BSSIDstr(i) + " " + WiFi.SSID(i) + "\n");
 
     }
-    else if (WiFi.SSID(i) == Robot_ssid) {
-      if (Robot_MAC == "-") {
-        Robot_MAC = WiFi.BSSIDstr(i);
+    else if (WiFi.SSID(i) == Remote_Name) {
+      Serial.print("\n(Remote_Name)");
+      //Serial.println(WiFi.SSID(i) + " " + WiFi.BSSIDstr(i) + " " + String(WiFi.RSSI(i))+ "\n");
+      Serial.println(String(WiFi.RSSI(i)) + " " + WiFi.BSSIDstr(i) + " " + WiFi.SSID(i) + "\n");
+
+
+      WiFi_With_Remote_Name_Found = true;
+    }
+
+
+    // if WiFi.SSID contains starts with 'MARIN' and ends with '-robot'
+    else if (WiFi.SSID(i).startsWith("MARIN") && WiFi.SSID(i).endsWith("-robot")) {
+
+      robots_found++;
+
+      
+      int robot_num = WiFi.SSID(i).substring(5, WiFi.SSID(i).length() - 6).toInt();
+      
+      if (found_robot_num == -1 || Remote_Num == robot_num) {
         robot_wifi_in_range = true;
+          // extract the robot number from the SSID
+        found_robot_num = robot_num;
+        found_robot_ssid_num = i;
+        
+
+        if (found_robot_ssid == "-") {
+          found_robot_ssid = WiFi.SSID(i);
+          Serial.println("found_robot_ssid: " + found_robot_ssid);
+        }
+
+        if (found_robot_mac == "-") {
+          found_robot_mac = WiFi.BSSIDstr(i);
+          Serial.println("found_robot_MAC: " + found_robot_mac + "\n");
+        }
+
       }
+
+      
+
+
+      
       Serial.print("\n(Robot WiFi) ");
       //Serial.println(WiFi.SSID(i) + " " + WiFi.BSSIDstr(i) + " " + String(WiFi.RSSI(i))+ "\n");
       Serial.println(String(WiFi.RSSI(i)) + " " + WiFi.BSSIDstr(i) + " " + WiFi.SSID(i) + "\n");
@@ -232,5 +728,81 @@ void get_ssids(){
   }
 
   Serial.println("-------------------------------------------------\n");
+  yield();
+
+  if (WiFi_With_Remote_Name_Found) {
+    Serial.println("ERROR: WiFi With same name as remote name found, please change the remote name in creds.h\n");
+    setPairingState(DUPLICATE_REMOTE_FOUND);
+  }
+  else{
+    checkAutoBind();
+
+    if (robot_wifi_in_range && Robot_MAC != "-" && Robot_ssid != "-") {
+
+      set_JoyC_LED_color(DEEP_SKY_BLUE);
+
+      connectRobot();  
+    
+    }
+
+    else {
+
+      if (!robots_found){
+        Serial.println("ERROR: " + String(Robot_ssid) + " not found :(");
+        update_status("No Robot WiFi :(", RED);
+        setPairingState(NO_ROBOTS_FOUND);
+        menu_active = true;
+        JoyC_Xinput = true;
+        g_menu_X_selector = WIFI_NETWORKS;
+        menu_Y_selector = 0;
+
+
+        //LCD_flush(); //BAD, LCD used by other core too CRASHES ESP32 DO NOT ENABLE
+        // is_paired = false;
+        // pairFailed = true;
+        // Pairing_State = PAIRING_FAILED;
+        // setPairingState(PAIRING_FAILED);
+        
+
+
+      }
+      else if (robots_found > 1){
+        Serial.println("WARNING: Multiple Robots found!");
+        update_status("1<robots_found", RED);
+        // is_paired = false;
+        // pairFailed = true;
+        // Pairing_State = MULTIPLE_ROBOTS_FOUND;
+        setPairingState(MULTIPLE_ROBOTS_FOUND);
+        menu_active = true;
+        JoyC_Xinput = true;
+        g_menu_X_selector = WIFI_NETWORKS;
+        menu_Y_selector = -(found_robot_ssid_num);
+
+      }
+      else if (robots_found == 1){
+        Serial.println("WARNING: Robot Num Not Found");
+        update_status("bad pair num", RED);
+        setPairingState(ROBOT_NUM_NOT_FOUND);
+        menu_active = true;
+        JoyC_Xinput = true;
+        g_menu_X_selector = WIFI_NETWORKS;
+        menu_Y_selector = -(found_robot_ssid_num);
+      }
+
+      
+    }
+
+  }
+
+
+
+
+  // yield();
+  // menu_active = true;
+  // JoyC_Xinput = true;
+  // g_menu_X_selector = WIFI_MENU;
+  // LCD_flush();
 
 }
+
+// --- wireless.cpp ---
