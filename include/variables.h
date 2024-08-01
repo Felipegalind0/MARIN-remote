@@ -1,6 +1,9 @@
 #ifndef _VARIABLES_H_
 #define _VARIABLES_H_
 
+
+
+
 #define btnCounter 10
 #define logCounter 100
 
@@ -32,10 +35,11 @@ enum ROBOT_ARMED_STATUS {
 enum Remote_Menu_X_Options {
   REMOTE_MENU = -1, 
   ROBOT_MENU = 0,
-  WIFI_NETWORKS = 1,
+  WIFI_NETWORKS_MENU = 1,
   WIFI_MENU = 111,
   SET_NUM_MENU = 120
 };
+#define WIFI_NETWORKS_MENU_SCAN 1
 
 enum Robot_Menu_Y_Options {
   ROBOT_MENU_LAND = -1, 
@@ -84,7 +88,7 @@ extern boolean isArmed;
 
 # define Robot_menu_max_X 1
 
-extern int g_menu_X_selector, menu_Y_selector;
+extern int g_menu_X_selector, g_menu_Y_selector;
 
 extern int menu_min_X, menu_max_X, menu_min_Y, menu_max_Y;
 

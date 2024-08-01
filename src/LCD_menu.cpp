@@ -6,7 +6,7 @@ String get_menu_title(int X_index){
     switch (X_index){
         case ROBOT_MENU:
             return "  < Robot Menu >";
-        case WIFI_NETWORKS:
+        case WIFI_NETWORKS_MENU:
             return " < WiFi Networks ";
 
         case WIFI_MENU:
@@ -45,7 +45,7 @@ String get_menu_str(int X_index, int Y_index){
             
 
 
-        case WIFI_NETWORKS:
+        case WIFI_NETWORKS_MENU:
 
             if (Y_index < 1){ //if not rescan
                 // {strength}dB {SSID}
@@ -83,11 +83,18 @@ String get_menu_str(int X_index, int Y_index){
 
         case SET_NUM_MENU:
             //return "Set Num";
-            if (Y_index>0){
-                return " Set #" + String(Y_index);
+            if (Y_index>=0){
+                return "      Set #" + String(Y_index);
             }
-            else if(Y_index = -1){
-                return " Set remote # too ON";
+            else if(Y_index == -1){
+                if (g_set_num_remote_too){
+                    
+                    return "Set remote + robot #";
+                }
+                else {
+                    return "  Set ONLY robot #";
+                }
+                return "Set ONLY robot #";
             }
             else{
                 return " Set Num";
@@ -173,7 +180,7 @@ void LCD_Menu(){
         case ROBOT_MENU:
             menu_rect_text_size = 2;
             break;
-        case WIFI_NETWORKS:
+        case WIFI_NETWORKS_MENU:
             menu_rect_text_size = 1;
             break;
         default:
@@ -190,15 +197,15 @@ void LCD_Menu(){
 
 
 
-    if( (g_menu_X_selector == ROBOT_MENU && ((menu_Y_selector+1) <= Robot_menu_max_X)) ||
+    if( (g_menu_X_selector == ROBOT_MENU && ((g_menu_Y_selector+1) <= Robot_menu_max_X)) ||
         // (g_menu_X_selector == WIFI_MENU && ((menu_Y_selector+1) <= n_WiFi_Networks-1)) ){
-        (g_menu_X_selector == WIFI_NETWORKS && (menu_Y_selector < 1)) ||
-        (g_menu_X_selector == WIFI_MENU && (menu_Y_selector < WIFI_MENU_Y_MAX)) ||
-        (g_menu_X_selector == SET_NUM_MENU && (menu_Y_selector < SET_NUM_MENU_Y_MAX))
+        (g_menu_X_selector == WIFI_NETWORKS_MENU && (g_menu_Y_selector < 1)) ||
+        (g_menu_X_selector == WIFI_MENU && (g_menu_Y_selector < WIFI_MENU_Y_MAX)) ||
+        (g_menu_X_selector == SET_NUM_MENU && (g_menu_Y_selector < SET_NUM_MENU_Y_MAX))
         ){
 
 
-        robot_menu_text_buf = get_menu_str(g_menu_X_selector, menu_Y_selector+1);
+        robot_menu_text_buf = get_menu_str(g_menu_X_selector, g_menu_Y_selector+1);
 
         //LCD_Top_1_line_text(robot_menu_text_buf, 1, TFT_LIGHTGREY, 5, 50, 131, 20, 10);
         LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, TFT_LIGHTGREY, upper_menu_rect_x, upper_menu_rect_y, upper_menu_rect_w, upper_menu_rect_h, upper_menu_rect_r);
@@ -212,7 +219,7 @@ void LCD_Menu(){
     }
 
 
-    robot_menu_text_buf = get_menu_str(g_menu_X_selector, menu_Y_selector);
+    robot_menu_text_buf = get_menu_str(g_menu_X_selector, g_menu_Y_selector);
 
     LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, WHITE, 2, 85, 131, 20, 7);
 
@@ -224,14 +231,14 @@ void LCD_Menu(){
     # define lower_menu_rect_r 10
 
 
-    if( (g_menu_X_selector == ROBOT_MENU && ((menu_Y_selector-1) >= Robot_menu_min_X))   ||
+    if( (g_menu_X_selector == ROBOT_MENU && ((g_menu_Y_selector-1) >= Robot_menu_min_X))   ||
         // (g_menu_X_selector == WIFI_MENU && ((menu_Y_selector-1) >= 0)) ){
-        (g_menu_X_selector == WIFI_NETWORKS  && (menu_Y_selector > 1-n_WiFi_Networks))   ||
-        (g_menu_X_selector == WIFI_MENU      && (menu_Y_selector > WIFI_MENU_Y_MIN))     ||
-        (g_menu_X_selector == SET_NUM_MENU   && (menu_Y_selector > SET_NUM_MENU_Y_MIN))  ){
+        (g_menu_X_selector == WIFI_NETWORKS_MENU  && (g_menu_Y_selector > 1-n_WiFi_Networks))   ||
+        (g_menu_X_selector == WIFI_MENU      && (g_menu_Y_selector > WIFI_MENU_Y_MIN))     ||
+        (g_menu_X_selector == SET_NUM_MENU   && (g_menu_Y_selector > SET_NUM_MENU_Y_MIN))  ){
 
 
-        robot_menu_text_buf = get_menu_str(g_menu_X_selector, menu_Y_selector-1);
+        robot_menu_text_buf = get_menu_str(g_menu_X_selector, g_menu_Y_selector-1);
 
         //LCD_Top_1_line_text(robot_menu_text_buf, 1, TFT_LIGHTGREY, 2, 110, 131, 20, 10);
         LCD_Top_1_line_text(robot_menu_text_buf, menu_rect_text_size, TFT_LIGHTGREY, lower_menu_rect_x, lower_menu_rect_y, lower_menu_rect_w, lower_menu_rect_h, lower_menu_rect_r);
@@ -242,5 +249,7 @@ void LCD_Menu(){
         LCD_Top_1_line_text(" ", menu_rect_text_size, DARKGREY, lower_menu_rect_x, lower_menu_rect_y, lower_menu_rect_w, lower_menu_rect_h, lower_menu_rect_r);
     
     }
+
+    
 
 }

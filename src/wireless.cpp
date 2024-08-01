@@ -753,8 +753,8 @@ void get_ssids(){
         setPairingState(NO_ROBOTS_FOUND);
         menu_active = true;
         JoyC_Xinput = true;
-        g_menu_X_selector = WIFI_NETWORKS;
-        menu_Y_selector = 0;
+        g_menu_X_selector = WIFI_NETWORKS_MENU;
+        g_menu_Y_selector = 0;
 
 
         //LCD_flush(); //BAD, LCD used by other core too CRASHES ESP32 DO NOT ENABLE
@@ -775,8 +775,8 @@ void get_ssids(){
         setPairingState(MULTIPLE_ROBOTS_FOUND);
         menu_active = true;
         JoyC_Xinput = true;
-        g_menu_X_selector = WIFI_NETWORKS;
-        menu_Y_selector = -(found_robot_ssid_num);
+        g_menu_X_selector = WIFI_NETWORKS_MENU;
+        g_menu_Y_selector = -(found_robot_ssid_num);
 
       }
       else if (robots_found == 1){
@@ -785,8 +785,8 @@ void get_ssids(){
         setPairingState(ROBOT_NUM_NOT_FOUND);
         menu_active = true;
         JoyC_Xinput = true;
-        g_menu_X_selector = WIFI_NETWORKS;
-        menu_Y_selector = -(found_robot_ssid_num);
+        g_menu_X_selector = WIFI_NETWORKS_MENU;
+        g_menu_Y_selector = -(found_robot_ssid_num);
       }
 
       

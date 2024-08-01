@@ -56,7 +56,7 @@ byte robot_state = UNKNOWN_ARMED_STATUS;
 
 int g_menu_X_selector = 0;
 
-int menu_Y_selector = 0;
+int g_menu_Y_selector = 0;
 
 
 String robot_msg = "";

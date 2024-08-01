@@ -290,7 +290,7 @@ void JoyC_loop(){
                         Y_selector_MAX = Robot_menu_max_Y;
                         break;
 
-                    case WIFI_NETWORKS:
+                    case WIFI_NETWORKS_MENU:
                         Y_selector_MAX = WIFI_NETWORKS_MENU_Y_MAX;
                         break;
                     case WIFI_MENU:
@@ -300,16 +300,16 @@ void JoyC_loop(){
                         Y_selector_MAX = SET_NUM_MENU_Y_MAX;
                         break;
                 }
-                if (menu_Y_selector < Y_selector_MAX){
+                if (g_menu_Y_selector < Y_selector_MAX){
                 // if (menu_Y_selector < Robot_menu_max_Y          && g_menu_X_selector == ROBOT_MENU    ||
                 //     menu_Y_selector < WIFI_NETWORKS_MENU_Y_MAX  && g_menu_X_selector == WIFI_NETWORKS ||
                 //     menu_Y_selector < WIFI_MENU_Y_MAX           && g_menu_X_selector == WIFI_MENU     ||
                 //     menu_Y_selector < SET_NUM_MENU_Y_MAX        && g_menu_X_selector == SET_NUM_MENU
                 //     ){
 
-                    menu_Y_selector++;
+                    g_menu_Y_selector++;
 
-                    Serial.println("menu_Y_selector: " + String(menu_Y_selector));
+                    Serial.println("menu_Y_selector: " + String(g_menu_Y_selector));
 
                     xTaskCreatePinnedToCore(
                     Click_Sound, /* Task function. */
@@ -340,15 +340,15 @@ void JoyC_loop(){
             else if (JoyC_Y_up_down == JoyC_selector_DOWN){
                 JoyC_Y_up_down = JoyC_selector_CENTER;
                 JoyC_needs_to_return_to_center = true;
-                if (menu_Y_selector > Robot_menu_min_Y && g_menu_X_selector == ROBOT_MENU ||
+                if (g_menu_Y_selector > Robot_menu_min_Y && g_menu_X_selector == ROBOT_MENU ||
                     //menu_Y_selector > 0                && g_menu_X_selector == WIFI_MENU  ){ // we want negative for proper layout
-                    menu_Y_selector > 1-n_WiFi_Networks && g_menu_X_selector == WIFI_NETWORKS||
-                    menu_Y_selector > WIFI_MENU_Y_MIN   && g_menu_X_selector == WIFI_MENU   ||
-                    menu_Y_selector > SET_NUM_MENU_Y_MIN && g_menu_X_selector == SET_NUM_MENU
+                    g_menu_Y_selector > 1-n_WiFi_Networks && g_menu_X_selector == WIFI_NETWORKS_MENU||
+                    g_menu_Y_selector > WIFI_MENU_Y_MIN   && g_menu_X_selector == WIFI_MENU   ||
+                    g_menu_Y_selector > SET_NUM_MENU_Y_MIN && g_menu_X_selector == SET_NUM_MENU
                     ){
-                    menu_Y_selector--;
+                    g_menu_Y_selector--;
 
-                    Serial.println("menu_Y_selector: " + String(menu_Y_selector));
+                    Serial.println("menu_Y_selector: " + String(g_menu_Y_selector));
 
                     // xTaskCreatePinnedToCore(
                     // Click_Sound, /* Task function. */
@@ -382,20 +382,20 @@ void JoyC_loop(){
                 JoyC_X_left_right = JoyC_selector_CENTER;
                 JoyC_needs_to_return_to_center = true;
                 if (g_menu_X_selector == WIFI_MENU){
-                    g_menu_X_selector = WIFI_NETWORKS;
+                    g_menu_X_selector = WIFI_NETWORKS_MENU;
                 }
                 else if (g_menu_X_selector > Robot_menu_min_X ){
                     g_menu_X_selector--;
                     
                     // make sure the Y selector is within the bounds of the menu
                     if (g_menu_X_selector == ROBOT_MENU){
-                        if (menu_Y_selector > Robot_menu_max_Y){
-                            menu_Y_selector = Robot_menu_max_Y;
+                        if (g_menu_Y_selector > Robot_menu_max_Y){
+                            g_menu_Y_selector = Robot_menu_max_Y;
                         }
                     }
-                    else if (g_menu_X_selector == WIFI_NETWORKS){
-                        if (menu_Y_selector > n_WiFi_Networks){
-                            menu_Y_selector = n_WiFi_Networks;
+                    else if (g_menu_X_selector == WIFI_NETWORKS_MENU){
+                        if (g_menu_Y_selector > n_WiFi_Networks){
+                            g_menu_Y_selector = n_WiFi_Networks;
                         }
                     }
                 }
@@ -408,13 +408,13 @@ void JoyC_loop(){
 
                     // make sure the Y selector is within the bounds of the menu
                     if (g_menu_X_selector == ROBOT_MENU){
-                        if (menu_Y_selector > Robot_menu_max_Y){
-                            menu_Y_selector = Robot_menu_max_Y;
+                        if (g_menu_Y_selector > Robot_menu_max_Y){
+                            g_menu_Y_selector = Robot_menu_max_Y;
                         }
                     }
-                    else if (g_menu_X_selector == WIFI_NETWORKS){
-                        if (menu_Y_selector > n_WiFi_Networks){
-                            menu_Y_selector = n_WiFi_Networks;
+                    else if (g_menu_X_selector == WIFI_NETWORKS_MENU){
+                        if (g_menu_Y_selector > n_WiFi_Networks){
+                            g_menu_Y_selector = n_WiFi_Networks;
                         }
                     }
                 }

@@ -124,6 +124,9 @@ void SysInit_Setup(void){
     is_booted = true;
 
     printESP32Info();
+
+    fs_setup();
+
     
 
     Serial.println("@SysInit_Setup COMPLETE");

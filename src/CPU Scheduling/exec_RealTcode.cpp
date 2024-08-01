@@ -48,6 +48,7 @@ void exit_sleep() {
   Serial.println("@exit_sleep: CPU Frequency set to " + String(getCpuFrequencyMhz()));
 }
 
+String warning_text = "";
 void processAbtn() {
 
     if(M5.BtnA.wasPressed()){
@@ -58,12 +59,12 @@ void processAbtn() {
 
       if(menu_active){ // if the menu is active
 
-      #define WIFI_MENU_SCAN 1
+
 
 
         if (g_menu_X_selector == ROBOT_MENU){
 
-          if(menu_Y_selector == ROBOT_MENU_TOOGLE_ARM){
+          if(g_menu_Y_selector == ROBOT_MENU_TOOGLE_ARM){
             //robot_ARM_requested = true;
             if (robot_state == ROBOT_DISARMED){
               robot_state = ROBOT_ARMING;
@@ -79,7 +80,7 @@ void processAbtn() {
             LCD_flush();
           }
 
-          if(menu_Y_selector == ROBOT_MENU_TAKEOFF){
+          if(g_menu_Y_selector == ROBOT_MENU_TAKEOFF){
             //robot_ARM_requested = true;
             robot_state = TAKEOFF_REQUESTED;
             
@@ -89,9 +90,9 @@ void processAbtn() {
           }
 
         }
-        else if (g_menu_X_selector == WIFI_NETWORKS){
+        else if (g_menu_X_selector == WIFI_NETWORKS_MENU){
 
-          if(menu_Y_selector == WIFI_MENU_SCAN){
+          if(g_menu_Y_selector == WIFI_NETWORKS_MENU_SCAN){
             //robot_ARM_requested = true;
             //robot_state = TAKEOFF_REQUESTED;
             setPairingState(PAIRING_REQUESTED);
@@ -100,32 +101,52 @@ void processAbtn() {
             JoyC_Xinput = false;
             LCD_flush();
           }
-          else if(-menu_Y_selector < n_WiFi_Networks){ // if clicked on a network
-            g_menu_selected_WiFi = WiFi.SSID(-menu_Y_selector);
+          else if(1-g_menu_Y_selector < n_WiFi_Networks){ // if clicked on a network
+            g_menu_selected_WiFi = WiFi.SSID(-g_menu_Y_selector);
             g_menu_X_selector = WIFI_MENU;
-            menu_Y_selector = 0;
+            g_menu_Y_selector = 0;
           }
 
 
         }
         else if (g_menu_X_selector == WIFI_MENU){
 
-            if(menu_Y_selector == WIFI_SHOW_INFO){
+            if(g_menu_Y_selector == WIFI_SHOW_INFO){
                 //TODO
                 ;
             }
-            else if (menu_Y_selector == WIFI_MENU_CONNECT_DISCONNECT){
+            else if (g_menu_Y_selector == WIFI_MENU_CONNECT_DISCONNECT){
                 //TODO
                 ;
             }
-            else if (menu_Y_selector == WIFI_SET_NUM){
+            else if (g_menu_Y_selector == WIFI_SET_NUM){
                 g_menu_X_selector = SET_NUM_MENU;
-                menu_Y_selector = -1;
+                g_menu_Y_selector = -1;
+                g_set_num_remote_too = true;
+                update_status(" Will Auto-Connect :D", GREEN);
 
             }
           
 
 
+        }
+
+        else if (g_menu_X_selector == SET_NUM_MENU){
+          if(g_menu_Y_selector == -1){
+            g_set_num_remote_too = !g_set_num_remote_too;
+            if (g_set_num_remote_too){
+              update_status(" Will Auto-Connect :D", GREEN);
+            }
+            else{
+              update_status("Will not Auto-Connect!", RED);
+
+            }
+          }
+          else{
+            if (g_menu_Y_selector >= 0){
+              set_pairing_num(g_menu_Y_selector, g_set_num_remote_too);
+            }
+          }
         }
 
         else{

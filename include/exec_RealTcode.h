@@ -13,6 +13,7 @@
 
 #include "LCD_loop.h"
 #include "Wireless.h"
+#include "set_pairing_num.h"
 
 
 void exec_RealTcode();

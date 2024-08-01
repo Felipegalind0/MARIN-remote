@@ -7,7 +7,7 @@ The ESP32-PICO-D4 includes 2x Xtensa 32-bit LX6 Cores and 1x ULP Coprocessor. Th
 
 The ULP coprocessor is not used in this project, but it is possible to use it to run code that needs to run while the main cores are in deep sleep.
 
-The ESP32's 2 cores, are both used, Core#0 is used for wireless communications and background tasks, while Core#1 is used for the real time task and only the real time task. 
+The ESP32's 2 cores are both used, Core#0 is used for wireless communications and background tasks, while Core#1 is used for the real time task and only the real time task. 
 
 Every time a program cycle is completed, a sync semaphore is is given to BackgroundTask to run. **Therefore BackgroundTask will at most match the refresh** rate of RealTCode, but sometimes BackgroundTask might hang while some non-async code is running and locking up that thread, but that is fine because RealTCode will keep running and keep the UI responsive while the poop code finishes running. 
 
